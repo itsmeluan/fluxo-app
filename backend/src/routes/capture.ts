@@ -6,8 +6,8 @@
  *   ("camera" | "galeria" | "import").
  *
  * Resposta: sempre um RASCUNHO (CaptureExtractResponse) — nunca cria nada no banco.
- * A confirmação/edição e o salvamento de fato acontecem em outra chamada (futura
- * rota POST /entries, ainda não implementada neste protótipo — ver README do backend).
+ * A confirmação/edição e o salvamento de fato acontecem em outra chamada
+ * (POST /entries — ver routes/entries.ts).
  */
 
 import type { FastifyInstance } from "fastify";

@@ -11,12 +11,14 @@ import {
   Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { extractCapture } from "../api/client";
+import { createEntry, extractCapture } from "../api/client";
 import {
   extractionToEditableDraft,
   type EditableDraft,
   type OrigemCaptura,
 } from "../types/entry";
+
+type ConfiancaCaptura = "alta" | "media" | "baixa";
 
 /**
  * Tela de Captura — implementa o fluxo descrito na seção 3.13 do golden source:
@@ -32,7 +34,10 @@ import {
 export default function CaptureScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
+  const [salvando, setSalvando] = useState(false);
   const [draft, setDraft] = useState<EditableDraft | null>(null);
+  const [origemCaptura, setOrigemCaptura] = useState<OrigemCaptura | null>(null);
+  const [confiancaCaptura, setConfiancaCaptura] = useState<ConfiancaCaptura | null>(null);
   const [avisoUsuario, setAvisoUsuario] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -78,6 +83,8 @@ export default function CaptureScreen() {
   async function processarImagem(uri: string, origem: OrigemCaptura) {
     setImageUri(uri);
     setDraft(null);
+    setOrigemCaptura(null);
+    setConfiancaCaptura(null);
     setAvisoUsuario(null);
     setErro(null);
     setCarregando(true);
@@ -85,6 +92,8 @@ export default function CaptureScreen() {
     try {
       const resposta = await extractCapture({ uri, origem });
       setDraft(extractionToEditableDraft(resposta.draft));
+      setOrigemCaptura(origem);
+      setConfiancaCaptura(resposta.draft.confiancaGeral);
       setAvisoUsuario(resposta.avisoUsuario);
     } catch (err) {
       setErro(
@@ -97,14 +106,60 @@ export default function CaptureScreen() {
     }
   }
 
-  function confirmarLancamento() {
-    // STUB: ainda não existe POST /entries no backend. Por ora só provamos que
-    // o usuário revisou/editou o rascunho antes de qualquer "salvamento" —
-    // o que é o ponto central do princípio de confiança da seção 3.13.
-    Alert.alert(
-      "Lançamento confirmado (protótipo)",
-      `Isso ainda não persiste no backend — é só a prova de que o fluxo captura → rascunho → edição → confirmação explícita funciona.\n\n${JSON.stringify(draft, null, 2)}`
-    );
+  function limparFormulario() {
+    setImageUri(null);
+    setDraft(null);
+    setOrigemCaptura(null);
+    setConfiancaCaptura(null);
+    setAvisoUsuario(null);
+    setErro(null);
+  }
+
+  async function confirmarLancamento() {
+    if (!draft) return;
+
+    // Validação client-side antes de gravar — o backend revalida, mas mensagens
+    // imediatas evitam um round-trip à toa.
+    const valorNum = Number(draft.valor.replace(",", "."));
+    if (!Number.isFinite(valorNum) || valorNum <= 0) {
+      Alert.alert("Valor inválido", "Informe um valor maior que zero.");
+      return;
+    }
+    if (!draft.data.trim()) {
+      Alert.alert("Data obrigatória", "Informe a data do lançamento (YYYY-MM-DD).");
+      return;
+    }
+    if (draft.tipo !== "receita" && draft.tipo !== "despesa") {
+      Alert.alert('Tipo inválido', 'Use "receita" ou "despesa".');
+      return;
+    }
+
+    setSalvando(true);
+    try {
+      const entry = await createEntry({
+        valor: valorNum,
+        data: draft.data.trim(),
+        tipo: draft.tipo,
+        categoria: draft.categoria.trim() || null,
+        descricao: draft.descricao.trim() || null,
+        balde: draft.baldeSugerido,
+        origem: origemCaptura ?? "import",
+        confiancaCaptura: confiancaCaptura,
+      });
+
+      Alert.alert(
+        "Lançamento salvo ✓",
+        `Registrado com sucesso (id ${entry.id.slice(0, 8)}…).`
+      );
+      limparFormulario();
+    } catch (err) {
+      Alert.alert(
+        "Não foi possível salvar",
+        err instanceof Error ? err.message : "Erro desconhecido ao salvar o lançamento."
+      );
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
@@ -203,8 +258,16 @@ export default function CaptureScreen() {
             />
           </Campo>
 
-          <Pressable style={styles.botaoConfirmar} onPress={confirmarLancamento}>
-            <Text style={styles.botaoConfirmarTexto}>Confirmar lançamento</Text>
+          <Pressable
+            style={[styles.botaoConfirmar, salvando && styles.botaoConfirmarDesabilitado]}
+            onPress={confirmarLancamento}
+            disabled={salvando}
+          >
+            {salvando ? (
+              <ActivityIndicator color="#0F172A" />
+            ) : (
+              <Text style={styles.botaoConfirmarTexto}>Confirmar lançamento</Text>
+            )}
           </Pressable>
         </View>
       )}
@@ -302,6 +365,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     marginTop: 8,
+  },
+  botaoConfirmarDesabilitado: {
+    opacity: 0.6,
   },
   botaoConfirmarTexto: {
     color: "#0F172A",

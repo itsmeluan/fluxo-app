@@ -47,6 +47,29 @@ export interface EditableDraft {
   baldeSugerido: BaldeSugerido;
 }
 
+/** Corpo enviado ao POST /entries ao confirmar um lançamento (ver backend/src/routes/entries.ts). */
+export interface CreateEntryPayload {
+  valor: number;
+  data: string; // "YYYY-MM-DD" ou ISO 8601
+  tipo: TipoLancamento;
+  categoria: string | null;
+  descricao: string | null;
+  balde: BaldeSugerido;
+  origem: OrigemCaptura | "manual";
+  imagemUrl?: string | null;
+  confiancaCaptura?: "alta" | "media" | "baixa" | null;
+}
+
+/** Lançamento já persistido, como devolvido pelo POST /entries. */
+export interface EntryRecord {
+  id: string;
+  valor: number;
+  data: string;
+  tipo: string;
+  balde: string | null;
+  confirmadoPeloUsuario: boolean;
+}
+
 export function extractionToEditableDraft(extraction: CaptureExtraction): EditableDraft {
   return {
     valor: extraction.valor !== null ? String(extraction.valor) : "",

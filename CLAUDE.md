@@ -50,7 +50,9 @@ Flow: `mobile/src/screens/CaptureScreen.tsx` (camera or gallery image) → `mobi
 
 **Non-negotiable trust principle (golden source 3.13):** the capture engine NEVER writes to the database. It only ever returns a draft for the user to review and edit. This is enforced at every layer — the backend route never touches Prisma, and the mobile `CaptureScreen` always shows an editable form before any "confirm" action. When extending this flow, preserve that invariant; don't let the vision call result flow directly into a persisted record anywhere.
 
-`POST /entries` (saving a confirmed entry) does not exist yet — `CaptureScreen`'s confirm button currently just shows the final JSON in an alert. This is the next logical extension point.
+`POST /entries` (`backend/src/routes/entries.ts`) persists a user-confirmed entry — it's the only write path to `Entry`. `CaptureScreen`'s confirm button validates the edited draft and calls it via `createEntry` (`mobile/src/api/client.ts`). The route is the *only* place in the codebase that sets `confirmadoPeloUsuario = true` (reaching it means the user confirmed in the UI — golden source 3.13). It maps the lowercase app enums (`receita`, `salario`, …) to the uppercase Prisma enums.
+
+Two prototype shortcuts to be aware of: (1) there's no auth yet, so every entry is attached to a single dev user upserted by `backend/src/lib/devUser.ts` (delete that file when Épico 1 / auth lands); (2) `Entry` stores a single confirmed `balde`, but the product's income-split-across-buckets model (US-004) is a dashboard computation that doesn't exist yet — this route does not split anything.
 
 ### Data model (`backend/prisma/schema.prisma`)
 

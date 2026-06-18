@@ -3,6 +3,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { captureRoutes } from "./routes/capture";
+import { entryRoutes } from "./routes/entries";
 
 const app = Fastify({ logger: true });
 
@@ -15,6 +16,7 @@ async function main() {
   app.get("/health", async () => ({ ok: true, servico: "fluxo-backend" }));
 
   await app.register(captureRoutes);
+  await app.register(entryRoutes);
 
   const port = Number(process.env.PORT) || 3000;
   await app.listen({ port, host: "0.0.0.0" });

@@ -1,4 +1,9 @@
-import type { CaptureExtractResponse, OrigemCaptura } from "../types/entry";
+import type {
+  CaptureExtractResponse,
+  CreateEntryPayload,
+  EntryRecord,
+  OrigemCaptura,
+} from "../types/entry";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
@@ -37,4 +42,28 @@ export async function extractCapture(params: {
   }
 
   return response.json();
+}
+
+/**
+ * Persiste um lançamento que o usuário revisou e confirmou na tela de Captura.
+ * É a única chamada que de fato grava no banco — o motor de captura nunca grava
+ * (princípio de confiança, golden source 3.13).
+ */
+export async function createEntry(payload: CreateEntryPayload): Promise<EntryRecord> {
+  const response = await fetch(`${API_URL}/entries`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Falha ao salvar lançamento (${response.status}): ${body}`);
+  }
+
+  const data = (await response.json()) as { entry: EntryRecord };
+  return data.entry;
 }
