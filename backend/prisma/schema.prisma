@@ -1,0 +1,88 @@
+// Schema inicial do FLUXO — ver golden source, seções 3.5/3.12/3.13/5.2.
+// AINDA NÃO MIGRADO contra um banco real (não há DATABASE_URL conectado neste
+// protótipo). Isso é a forma declarada do modelo de dados, para destravar o
+// desenvolvimento do motor de captura sem bloquear em infraestrutura de banco.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RegimeTributario {
+  MEI
+  SIMPLES
+  CARNE_LEAO
+}
+
+enum TipoLancamento {
+  RECEITA
+  DESPESA
+}
+
+enum BaldeTipo {
+  SALARIO
+  IMPOSTO
+  RESERVA
+  REINVESTIMENTO
+}
+
+enum OrigemLancamento {
+  CAMERA
+  GALERIA
+  IMPORT
+  MANUAL
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  nome      String?
+  regime    RegimeTributario?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entries      Entry[]
+  bucketConfig BucketConfig?
+}
+
+/// Configuração de baldes do usuário (% de cada recebimento que vai para cada balde).
+/// Ver seção 3.5 "Configuração de baldes".
+model BucketConfig {
+  id        String @id @default(uuid())
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id])
+
+  percentSalario        Float @default(0.5)
+  percentImposto         Float @default(0.15)
+  percentReserva         Float @default(0.25)
+  percentReinvestimento  Float @default(0.1)
+
+  updatedAt DateTime @updatedAt
+}
+
+/// Um lançamento — pode ter vindo do motor de captura (câmera/imagem) ou de
+/// entrada manual. Campos de captura ficam null quando origem = MANUAL.
+model Entry {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+
+  valor       Float
+  data        DateTime
+  tipo        TipoLancamento
+  categoria   String?
+  descricao   String?
+  balde       BaldeTipo?
+
+  origem            OrigemLancamento
+  imagemUrl         String? // path/URL da imagem original, se origem != MANUAL
+  confiancaCaptura  String? // "alta" | "media" | "baixa" — só relevante p/ capturas via imagem
+  confirmadoPeloUsuario Boolean @default(false) // nunca true automaticamente — ver princípio de confiança, 3.13
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

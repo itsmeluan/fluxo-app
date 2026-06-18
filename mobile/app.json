@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "FLUXO",
+    "slug": "fluxo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "fluxo",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#0F172A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "bundleIdentifier": "com.fluxo.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "O FLUXO usa a câmera para capturar fotos de recibos, comprovantes de PIX e anotações manuscritas, e sugerir o lançamento automaticamente.",
+        "NSPhotoLibraryUsageDescription": "O FLUXO acessa suas fotos para importar imagens de recibos e comprovantes já salvos."
+      }
+    },
+    "android": {
+      "package": "com.fluxo.app",
+      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O FLUXO usa a câmera para capturar recibos, comprovantes de PIX e anotações manuscritas."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O FLUXO acessa suas fotos para importar imagens de recibos e comprovantes."
+        }
+      ]
+    ]
+  }
+}

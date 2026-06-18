@@ -1,0 +1,6 @@
+{
+  "_instrucoes": "Preencha csv_url com o link de 'Publicar na web' (formato CSV) da planilha de respostas do Google Forms. Ver FLUXO-formulario-e-divulgacao.md, seção 1, passo 5. Depois de preencher, salve o arquivo — a tarefa agendada diária detecta automaticamente na próxima execução, não precisa avisar.",
+  "csv_url": "",
+  "form_url": "",
+  "data_configurado": ""
+}
