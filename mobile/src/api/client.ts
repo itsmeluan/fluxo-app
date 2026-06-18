@@ -1,10 +1,21 @@
 import type {
+  BucketConfig,
   CaptureExtractResponse,
   CreateEntryPayload,
   EntryRecord,
   ListEntriesResponse,
   OrigemCaptura,
+  Perfil,
+  UpdatePerfilPayload,
 } from "../types/entry";
+
+async function jsonOuErro<T>(response: Response, contexto: string): Promise<T> {
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`${contexto} (${response.status}): ${body}`);
+  }
+  return response.json();
+}
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
@@ -76,10 +87,38 @@ export async function listEntries(): Promise<ListEntriesResponse> {
     headers: { Accept: "application/json" },
   });
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Falha ao carregar lançamentos (${response.status}): ${body}`);
-  }
+  return jsonOuErro<ListEntriesResponse>(response, "Falha ao carregar lançamentos");
+}
 
-  return response.json();
+/** Perfil do usuário (regime, meta de salário, tipo de trabalho). */
+export async function getMe(): Promise<Perfil> {
+  const response = await fetch(`${API_URL}/me`, {
+    headers: { Accept: "application/json" },
+  });
+  return jsonOuErro<Perfil>(response, "Falha ao carregar perfil");
+}
+
+export async function updateMe(payload: UpdatePerfilPayload): Promise<Perfil> {
+  const response = await fetch(`${API_URL}/me`, {
+    method: "PUT",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return jsonOuErro<Perfil>(response, "Falha ao salvar perfil");
+}
+
+export async function getBucketConfig(): Promise<BucketConfig> {
+  const response = await fetch(`${API_URL}/bucket-config`, {
+    headers: { Accept: "application/json" },
+  });
+  return jsonOuErro<BucketConfig>(response, "Falha ao carregar baldes");
+}
+
+export async function updateBucketConfig(config: BucketConfig): Promise<BucketConfig> {
+  const response = await fetch(`${API_URL}/bucket-config`, {
+    method: "PUT",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+  return jsonOuErro<BucketConfig>(response, "Falha ao salvar baldes");
 }

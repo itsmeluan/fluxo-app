@@ -93,6 +93,34 @@ export interface ListEntriesResponse {
   resumo: EntryResumo;
 }
 
+export type RegimeTributario = "mei" | "simples" | "carne_leao";
+
+/** Perfil do usuário (GET/PUT /me). */
+export interface Perfil {
+  id: string;
+  email: string;
+  nome: string | null;
+  regime: RegimeTributario | null;
+  tipoTrabalho: string | null;
+  metaSalario: number | null;
+}
+
+/** Percentuais de baldes (GET/PUT /bucket-config). */
+export interface BucketConfig {
+  percentSalario: number;
+  percentImposto: number;
+  percentReserva: number;
+  percentReinvestimento: number;
+}
+
+/** Payload do PUT /me — todos opcionais; "nao_sei" mapeia regime para null no backend. */
+export interface UpdatePerfilPayload {
+  nome?: string | null;
+  regime?: RegimeTributario | "nao_sei" | null;
+  tipoTrabalho?: string | null;
+  metaSalario?: number | null;
+}
+
 export function extractionToEditableDraft(extraction: CaptureExtraction): EditableDraft {
   return {
     valor: extraction.valor !== null ? String(extraction.valor) : "",

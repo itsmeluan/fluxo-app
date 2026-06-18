@@ -11,16 +11,16 @@ import {
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation";
-import { listEntries } from "../api/client";
-import type { BaldeSaldos, EntryRecord, EntryResumo } from "../types/entry";
+import { getMe, listEntries } from "../api/client";
+import type { BaldeSaldos, EntryRecord, EntryResumo, Perfil } from "../types/entry";
 
 /**
- * Dashboard (golden source 3.4/3.5, US-005/US-004). O número principal é o
- * balde "Salário" — quanto o usuário pode se pagar. Abaixo, os outros baldes,
- * os totais do período e a lista de lançamentos.
+ * Dashboard / Home (golden source 3.4/3.5, US-004/US-005) — visual alinhado ao
+ * FLUXO-mockup.html. Número principal = balde "Salário" (quanto o usuário pode
+ * se pagar), com pill de status e barra de progresso vs. a meta do perfil.
  *
- * Os baldes vêm já calculados pelo backend (GET /entries -> resumo): cada
- * receita é dividida entre os baldes pelos percentuais configurados.
+ * Os baldes vêm já calculados pelo backend (GET /entries → resumo); a meta vem
+ * do perfil (GET /me). Tudo recarrega ao ganhar foco (atualiza após uma captura).
  */
 export default function DashboardScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -29,20 +29,20 @@ export default function DashboardScreen() {
   const [erro, setErro] = useState<string | null>(null);
   const [entries, setEntries] = useState<EntryRecord[]>([]);
   const [resumo, setResumo] = useState<EntryResumo | null>(null);
+  const [perfil, setPerfil] = useState<Perfil | null>(null);
 
   const carregar = useCallback(async () => {
     setErro(null);
     try {
-      const dados = await listEntries();
+      const [dados, me] = await Promise.all([listEntries(), getMe()]);
       setEntries(dados.entries);
       setResumo(dados.resumo);
+      setPerfil(me);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao carregar os dados.");
     }
   }, []);
 
-  // Recarrega toda vez que a tela ganha foco — inclusive ao voltar da Captura
-  // depois de confirmar um lançamento.
   useFocusEffect(
     useCallback(() => {
       let ativo = true;
@@ -62,6 +62,11 @@ export default function DashboardScreen() {
     setAtualizando(false);
   }
 
+  const salario = resumo?.baldes.salario ?? 0;
+  const meta = perfil?.metaSalario ?? null;
+  const pct = meta && meta > 0 ? Math.round((salario / meta) * 100) : null;
+  const status = statusDaMeta(pct);
+
   return (
     <ScrollView
       style={styles.tela}
@@ -78,10 +83,46 @@ export default function DashboardScreen() {
         <Text style={styles.erro}>{erro}</Text>
       ) : (
         <>
-          <Text style={styles.rotuloSalario}>Salário disponível</Text>
-          <Text style={styles.valorSalario}>{formatBRL(resumo?.baldes.salario ?? 0)}</Text>
+          <Text style={styles.saudacao}>Olá 👋</Text>
 
-          {resumo && <BaldesGrid baldes={resumo.baldes} />}
+          <View style={styles.cardSalario}>
+            <Text style={styles.cardSalarioLabel}>Salário disponível</Text>
+            <Text style={styles.valorSalario}>{formatBRL(salario)}</Text>
+            {pct !== null && (
+              <>
+                <View style={[styles.pill, { backgroundColor: status.fundo }]}>
+                  <Text style={[styles.pillTexto, { color: status.cor }]}>{pct}% da sua meta</Text>
+                </View>
+                <View style={styles.track}>
+                  <View
+                    style={[styles.fill, { width: `${Math.min(100, pct)}%`, backgroundColor: status.cor }]}
+                  />
+                </View>
+              </>
+            )}
+            {pct === null && (
+              <Text style={styles.semMeta}>Defina sua meta de salário no onboarding para acompanhar o progresso.</Text>
+            )}
+          </View>
+
+          <View style={styles.cardFolego}>
+            <View style={styles.folegoTopo}>
+              <Text style={styles.folegoTitulo}>🛟 Fôlego financeiro</Text>
+              <Text style={styles.folegoEmBreve}>em breve</Text>
+            </View>
+            <Text style={styles.folegoSub}>
+              Quando você cadastrar suas despesas fixas, mostramos por quantos meses dá pra se manter
+              sem nenhum projeto novo.
+            </Text>
+          </View>
+
+          {resumo && (
+            <View style={styles.bucketRow}>
+              <BucketCard emoji="🧾" label="Imposto" valor={resumo.baldes.imposto} />
+              <BucketCard emoji="🛡️" label="Reserva" valor={resumo.baldes.reserva} />
+              <BucketCard emoji="🌱" label="Reinvest." valor={resumo.baldes.reinvestimento} />
+            </View>
+          )}
 
           {resumo && (
             <View style={styles.totais}>
@@ -90,6 +131,10 @@ export default function DashboardScreen() {
               <Totalzinho rotulo="Saldo" valor={resumo.saldo} cor="#E2E8F0" />
             </View>
           )}
+
+          <Pressable style={styles.botaoCaptura} onPress={() => navigation.navigate("Capture")}>
+            <Text style={styles.botaoCapturaTexto}>📷 Capturar recibo / comprovante</Text>
+          </Pressable>
 
           <Text style={styles.tituloLista}>Lançamentos</Text>
           {entries.length === 0 ? (
@@ -101,30 +146,22 @@ export default function DashboardScreen() {
           )}
         </>
       )}
-
-      <Pressable style={styles.botaoCaptura} onPress={() => navigation.navigate("Capture")}>
-        <Text style={styles.botaoCapturaTexto}>📷 Capturar recibo / comprovante</Text>
-      </Pressable>
     </ScrollView>
   );
 }
 
-function BaldesGrid({ baldes }: { baldes: BaldeSaldos }) {
-  return (
-    <View style={styles.baldesGrid}>
-      <BaldeCard rotulo="Imposto" valor={baldes.imposto} />
-      <BaldeCard rotulo="Reserva" valor={baldes.reserva} />
-      <BaldeCard rotulo="Reinvestimento" valor={baldes.reinvestimento} />
-      <BaldeCard rotulo="Salário" valor={baldes.salario} />
-    </View>
-  );
+function statusDaMeta(pct: number | null) {
+  if (pct === null || pct >= 90) return { cor: "#22C55E", fundo: "rgba(34,197,94,0.15)" };
+  if (pct >= 50) return { cor: "#FBBF24", fundo: "rgba(251,191,36,0.15)" };
+  return { cor: "#F87171", fundo: "rgba(248,113,113,0.15)" };
 }
 
-function BaldeCard({ rotulo, valor }: { rotulo: string; valor: number }) {
+function BucketCard({ emoji, label, valor }: { emoji: string; label: string; valor: number }) {
   return (
-    <View style={styles.baldeCard}>
-      <Text style={styles.baldeRotulo}>{rotulo}</Text>
-      <Text style={styles.baldeValor}>{formatBRL(valor)}</Text>
+    <View style={styles.bucket}>
+      <Text style={styles.bucketEmoji}>{emoji}</Text>
+      <Text style={styles.bucketLabel}>{label}</Text>
+      <Text style={styles.bucketValor}>{formatBRL(valor)}</Text>
     </View>
   );
 }
@@ -158,10 +195,7 @@ function LinhaEntry({ entry }: { entry: EntryRecord }) {
 }
 
 function formatBRL(valor: number): string {
-  return valor.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 function formatData(iso: string): string {
@@ -171,89 +205,73 @@ function formatData(iso: string): string {
 }
 
 const styles = StyleSheet.create({
-  tela: {
-    backgroundColor: "#0F172A",
-  },
-  container: {
-    padding: 20,
-    gap: 12,
-    paddingBottom: 40,
-  },
-  centro: {
-    paddingVertical: 48,
+  tela: { backgroundColor: "#0F172A" },
+  container: { padding: 20, gap: 12, paddingBottom: 40 },
+  centro: { paddingVertical: 48, alignItems: "center" },
+  erro: { color: "#F87171", textAlign: "center", paddingVertical: 24 },
+  saudacao: { color: "#FFFFFF", fontSize: 20, fontWeight: "800", marginTop: 4 },
+  cardSalario: {
+    backgroundColor: "#1E293B",
+    borderRadius: 16,
+    padding: 18,
     alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
-  erro: {
-    color: "#F87171",
-    textAlign: "center",
-    paddingVertical: 24,
+  cardSalarioLabel: { color: "#94A3B8", fontSize: 13 },
+  valorSalario: { color: "#22C55E", fontSize: 40, fontWeight: "800" },
+  pill: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 999 },
+  pillTexto: { fontSize: 12, fontWeight: "700" },
+  track: { width: "100%", height: 8, backgroundColor: "#16213a", borderRadius: 99, overflow: "hidden" },
+  fill: { height: "100%", borderRadius: 99 },
+  semMeta: { color: "#64748B", fontSize: 12, textAlign: "center" },
+  cardFolego: {
+    backgroundColor: "#1E293B",
+    borderRadius: 16,
+    padding: 16,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
-  rotuloSalario: {
-    color: "#94A3B8",
-    fontSize: 14,
-    textAlign: "center",
-    marginTop: 8,
-  },
-  valorSalario: {
-    color: "#22C55E",
-    fontSize: 40,
-    fontWeight: "800",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  baldesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  baldeCard: {
-    flexGrow: 1,
-    flexBasis: "47%",
+  folegoTopo: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  folegoTitulo: { color: "#E2E8F0", fontSize: 14, fontWeight: "600" },
+  folegoEmBreve: { color: "#64748B", fontSize: 11 },
+  folegoSub: { color: "#64748B", fontSize: 12, lineHeight: 17 },
+  bucketRow: { flexDirection: "row", gap: 10 },
+  bucket: {
+    flex: 1,
     backgroundColor: "#1E293B",
     borderRadius: 14,
-    padding: 14,
-    gap: 4,
+    padding: 12,
+    alignItems: "center",
+    gap: 2,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
-  baldeRotulo: {
-    color: "#94A3B8",
-    fontSize: 12,
-  },
-  baldeValor: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
-  },
+  bucketEmoji: { fontSize: 18 },
+  bucketLabel: { fontSize: 11, color: "#94A3B8" },
+  bucketValor: { fontSize: 13, color: "#FFFFFF", fontWeight: "700" },
   totais: {
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: "#1E293B",
     borderRadius: 14,
     padding: 14,
+  },
+  totalItem: { alignItems: "center", gap: 2 },
+  totalRotulo: { color: "#94A3B8", fontSize: 12 },
+  totalValor: { fontSize: 15, fontWeight: "700" },
+  botaoCaptura: {
+    backgroundColor: "#22C55E",
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: "center",
     marginTop: 4,
   },
-  totalItem: {
-    alignItems: "center",
-    gap: 2,
-  },
-  totalRotulo: {
-    color: "#94A3B8",
-    fontSize: 12,
-  },
-  totalValor: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  tituloLista: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 12,
-  },
-  vazio: {
-    color: "#94A3B8",
-    fontSize: 14,
-    paddingVertical: 8,
-  },
+  botaoCapturaTexto: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
+  tituloLista: { color: "#FFFFFF", fontSize: 16, fontWeight: "700", marginTop: 12 },
+  vazio: { color: "#94A3B8", fontSize: 14, paddingVertical: 8 },
   linha: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -263,34 +281,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  linhaEsq: {
-    flex: 1,
-    marginRight: 12,
-    gap: 2,
-  },
-  linhaTitulo: {
-    color: "#E2E8F0",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  linhaData: {
-    color: "#64748B",
-    fontSize: 12,
-  },
-  linhaValor: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  botaoCaptura: {
-    backgroundColor: "#22C55E",
-    paddingVertical: 18,
-    borderRadius: 16,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  botaoCapturaTexto: {
-    color: "#0F172A",
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  linhaEsq: { flex: 1, marginRight: 12, gap: 2 },
+  linhaTitulo: { color: "#E2E8F0", fontSize: 14, fontWeight: "600" },
+  linhaData: { color: "#64748B", fontSize: 12 },
+  linhaValor: { fontSize: 15, fontWeight: "700" },
 });

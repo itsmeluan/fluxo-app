@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLUXO — Mockup interativo</title>
+<style>
+  :root{
+    --bg:#0F172A;
+    --card:#1E293B;
+    --card2:#16213a;
+    --primary:#22C55E;
+    --primary-ink:#0F172A;
+    --text:#FFFFFF;
+    --muted:#94A3B8;
+    --faint:#64748B;
+    --warn:#FBBF24;
+    --danger:#F87171;
+    --border: rgba(255,255,255,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#05070d;
+    color:var(--text);
+    min-height:100vh;
+    padding:24px 16px 80px;
+  }
+  .page-header{
+    max-width:1100px;
+    margin:0 auto 18px;
+    text-align:center;
+  }
+  .page-header h1{
+    font-size:22px;
+    margin:0 0 4px;
+  }
+  .page-header p{
+    color:var(--muted);
+    font-size:13px;
+    margin:0;
+  }
+  .jumpbar{
+    max-width:1100px;
+    margin:18px auto 28px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+  }
+  .jumpbar button{
+    background:var(--card);
+    border:1px solid var(--border);
+    color:var(--muted);
+    font-size:12px;
+    padding:7px 13px;
+    border-radius:999px;
+    cursor:pointer;
+  }
+  .jumpbar button:hover{ color:var(--text); border-color:var(--primary); }
+
+  .layout{
+    max-width:1100px;
+    margin:0 auto;
+    display:flex;
+    gap:32px;
+    justify-content:center;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  /* ---- phone frame ---- */
+  .phone{
+    width:375px;
+    height:760px;
+    background:#000;
+    border-radius:44px;
+    padding:12px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.7), 0 0 0 1px #222;
+    flex-shrink:0;
+  }
+  .phone-screen{
+    position:relative;
+    width:100%;
+    height:100%;
+    background:var(--bg);
+    border-radius:34px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .statusbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 22px 4px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    flex-shrink:0;
+  }
+  .notch{
+    position:absolute;
+    top:0; left:50%;
+    transform:translateX(-50%);
+    width:120px; height:22px;
+    background:#000;
+    border-radius:0 0 16px 16px;
+    z-index:5;
+  }
+  .screens-wrap{
+    flex:1;
+    position:relative;
+    overflow:hidden;
+  }
+  .screen{
+    position:absolute;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    overflow-y:auto;
+    padding:18px 18px 28px;
+    gap:14px;
+  }
+  .screen.active{ display:flex; }
+  .screen::-webkit-scrollbar{ width:0; }
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:2px;
+  }
+  .backbtn{
+    background:var(--card);
+    border:none;
+    color:var(--text);
+    width:34px;height:34px;
+    border-radius:10px;
+    font-size:16px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .topbar h2{
+    font-size:17px;
+    margin:0;
+    flex:1;
+  }
+  .icon-btn{
+    background:var(--card);
+    border:none;
+    color:var(--text);
+    width:34px;height:34px;
+    border-radius:10px;
+    font-size:15px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  h1.logo{ font-size:42px; font-weight:800; margin:0; text-align:center; }
+  .tagline{ color:var(--muted); text-align:center; margin:0 0 8px; font-size:14px; }
+
+  .card{
+    background:var(--card);
+    border-radius:16px;
+    padding:16px;
+    border:1px solid var(--border);
+  }
+  .card.tight{ padding:12px 14px; }
+
+  .muted{ color:var(--muted); font-size:13px; }
+  .faint{ color:var(--faint); font-size:12px; }
+
+  .btn-primary{
+    background:var(--primary);
+    color:var(--primary-ink);
+    border:none;
+    padding:15px;
+    border-radius:14px;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    width:100%;
+  }
+  .btn-primary:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-secondary{
+    background:var(--card2);
+    color:var(--text);
+    border:1px solid var(--border);
+    padding:13px;
+    border-radius:14px;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    width:100%;
+  }
+  .btn-row{ display:flex; gap:10px; }
+  .btn-row > *{ flex:1; }
+  .link-btn{
+    background:none;border:none;color:var(--primary);font-size:13px;
+    text-align:center; padding:4px; cursor:pointer; text-decoration:underline;
+  }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    background:var(--card2);
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:9px 14px;
+    border-radius:999px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .chip.selected{ background:var(--primary); color:var(--primary-ink); border-color:var(--primary); font-weight:700; }
+
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ color:var(--muted); font-size:12px; }
+  .field input, .field select{
+    background:var(--card2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:12px;
+    border-radius:10px;
+    font-size:14px;
+  }
+  .big-input{
+    font-size:34px; font-weight:800; text-align:center;
+    background:transparent; border:none; color:var(--text); width:100%;
+  }
+  .big-input:focus{ outline:none; }
+
+  .progress-track{
+    height:8px; background:var(--card2); border-radius:99px; overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; border-radius:99px; background:var(--primary);
+    transition:width .6s ease;
+  }
+
+  .dots{ display:flex; gap:6px; justify-content:center; margin-bottom:4px; }
+  .dot{ width:7px;height:7px;border-radius:50%; background:var(--card2); }
+  .dot.on{ background:var(--primary); }
+
+  .number-xl{ font-size:40px; font-weight:800; text-align:center; margin:0; }
+  .status-pill{
+    align-self:center;
+    font-size:12px; font-weight:700; padding:4px 12px; border-radius:999px;
+  }
+  .status-green{ background:rgba(34,197,94,.15); color:var(--primary); }
+  .status-yellow{ background:rgba(251,191,36,.15); color:var(--warn); }
+  .status-red{ background:rgba(248,113,113,.15); color:var(--danger); }
+
+  .bucket-row{ display:flex; gap:10px; }
+  .bucket{
+    flex:1; background:var(--card); border-radius:14px; padding:10px; border:1px solid var(--border);
+    text-align:center;
+  }
+  .bucket .emoji{ font-size:18px; }
+  .bucket .label{ font-size:11px; color:var(--muted); margin-top:2px; }
+  .bucket .value{ font-size:13px; font-weight:700; margin-top:2px; }
+  .bucket .gauge{ height:5px; border-radius:99px; background:var(--card2); margin-top:6px; overflow:hidden; }
+  .bucket .gauge i{ display:block; height:100%; border-radius:99px; }
+
+  .alert-banner{
+    border-radius:14px; padding:12px 14px; font-size:13px; display:flex; gap:8px; align-items:flex-start;
+    cursor:pointer;
+  }
+  .alert-green{ background:rgba(34,197,94,.12); color:#86efac; }
+  .alert-warn{ background:rgba(251,191,36,.12); color:#fde68a; }
+  .alert-danger{ background:rgba(248,113,113,.12); color:#fecaca; }
+
+  .quick-actions{ display:flex; gap:10px; }
+  .quick-actions button{ flex:1; }
+
+  .footer-links{ display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+  .footer-link{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:13px 14px;
+    cursor:pointer; color:var(--text); font-size:13px;
+  }
+  .footer-link span.arrow{ color:var(--muted); }
+
+  .slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:10px; }
+  .slider-row .top{ display:flex; justify-content:space-between; font-size:13px; }
+  .slider-row input[type=range]{ width:100%; accent-color:var(--primary); }
+
+  .split-line{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
+  .split-line:last-child{ border-bottom:none; }
+
+  .bars-chart{ display:flex; align-items:flex-end; gap:5px; height:140px; position:relative; }
+  .bars-chart .target-line{
+    position:absolute; left:0; right:0; border-top:1px dashed var(--muted); font-size:9px; color:var(--muted);
+  }
+  .bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; cursor:pointer; gap:4px; }
+  .bar-col .bar{ width:100%; border-radius:4px 4px 0 0; background:var(--faint); transition:height .4s; }
+  .bar-col.good .bar{ background:var(--primary); }
+  .bar-col .m{ font-size:8px; color:var(--muted); }
+
+  .expense-item{ display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .expense-item button{ background:none; border:none; color:var(--danger); font-size:14px; cursor:pointer; }
+
+  .toast{
+    position:absolute; bottom:18px; left:18px; right:18px;
+    background:var(--primary); color:var(--primary-ink); font-weight:700; font-size:13px;
+    padding:12px; border-radius:12px; text-align:center;
+    opacity:0; transform:translateY(10px); transition:all .25s; pointer-events:none; z-index:20;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+
+  /* ---- side notes panel ---- */
+  .notes{
+    width:320px;
+    flex-shrink:0;
+  }
+  .notes h3{ font-size:14px; margin:0 0 8px; }
+  .notes .card{ margin-bottom:14px; font-size:13px; line-height:1.5; }
+  .notes .card b{ color:var(--text); }
+  .notes ul{ margin:6px 0 0; padding-left:18px; color:var(--muted); }
+  .notes li{ margin-bottom:4px; }
+
+  @media (max-width: 760px){
+    .layout{ flex-direction:column; align-items:center; }
+    .notes{ width:100%; max-width:375px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>FLUXO — Mockup interativo</h1>
+  <p>Clique para navegar pelo protótipo. Acompanha a especificação em <code>FLUXO-mockup-spec.md</code> (para o Claude Code implementar).</p>
+</div>
+
+<div class="jumpbar">
+  <button onclick="go('splash')">Onboarding</button>
+  <button onclick="go('home')">Home / Dashboard</button>
+  <button onclick="go('nova-entrada')">Nova entrada</button>
+  <button onclick="go('capture-start')">Captura (câmera/imagem)</button>
+  <button onclick="go('salario-detalhe')">Quanto posso me pagar</button>
+  <button onclick="go('baldes-config')">Configuração de baldes</button>
+  <button onclick="go('despesas-fixas')">Despesas fixas</button>
+  <button onclick="go('historico')">Histórico 12 meses</button>
+  <button onclick="go('contracheque')">Contracheque mensal</button>
+  <button onclick="go('alerta-imposto')">Alerta de imposto</button>
+</div>
+
+<div class="layout">
+  <div class="phone">
+    <div class="phone-screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span id="clock">9:41</span><span>🔋 100%</span></div>
+
+      <div class="screens-wrap" id="screens-wrap">
+
+        <!-- ===================== SPLASH ===================== -->
+        <div class="screen active" id="screen-splash" style="justify-content:center;align-items:center;text-align:center;">
+          <h1 class="logo">FLUXO</h1>
+          <p class="tagline">Seu salário, mesmo sem patrão.</p>
+          <div style="height:24px"></div>
+          <button class="btn-primary" style="max-width:220px" onclick="go('onb-1')">Começar</button>
+        </div>
+
+        <!-- ===================== ONBOARDING 1 — tipo de trabalho ===================== -->
+        <div class="screen" id="screen-onb-1">
+          <div class="dots"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <h2 style="margin:6px 0 0;">Qual é seu tipo de trabalho?</h2>
+          <p class="muted">Isso ajuda a sugerir como dividir seu dinheiro. Nenhuma área é tratada como "principal" — pode mudar depois.</p>
+          <div class="chips" id="chips-trabalho">
+            <div class="chip" onclick="selectChip(this,'chips-trabalho','tipoTrabalho')">Design</div>
+            <div class="chip" onclick="selectChip(this,'chips-trabalho','tipoTrabalho')">Dev / Tech</div>
+            <div class="chip" onclick="selectChip(this,'chips-trabalho','tipoTrabalho')">Marketing / Conteúdo</div>
+            <div class="chip" onclick="selectChip(this,'chips-trabalho','tipoTrabalho')">Saúde / Bem-estar</div>
+            <div class="chip" onclick="selectChip(this,'chips-trabalho','tipoTrabalho')">Consultoria</div>
+            <div class="chip" onclick="selectChip(this,'chips-trabalho','tipoTrabalho')">Educação</div>
+            <div class="chip" onclick="selectChip(this,'chips-trabalho','tipoTrabalho')">Outro</div>
+          </div>
+          <div style="flex:1"></div>
+          <button class="btn-primary" id="btn-onb-1" disabled onclick="go('onb-2')">Continuar</button>
+        </div>
+
+        <!-- ===================== ONBOARDING 2 — regime tributário ===================== -->
+        <div class="screen" id="screen-onb-2">
+          <div class="dots"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <h2 style="margin:6px 0 0;">Como você é registrado?</h2>
+          <p class="muted">Usamos isso para estimar seu imposto. É só uma estimativa — confirme sempre com seu contador.</p>
+          <div class="chips" id="chips-regime">
+            <div class="chip" onclick="selectChip(this,'chips-regime','regime')">MEI</div>
+            <div class="chip" onclick="selectChip(this,'chips-regime','regime')">Autônomo (carnê-leão)</div>
+            <div class="chip" onclick="selectChip(this,'chips-regime','regime')">Simples Nacional</div>
+            <div class="chip" onclick="selectChip(this,'chips-regime','regime')">Não sei</div>
+          </div>
+          <div style="flex:1"></div>
+          <button class="backbtn-link link-btn" onclick="back()" style="margin-bottom:-4px;">← Voltar</button>
+          <button class="btn-primary" id="btn-onb-2" disabled onclick="go('onb-3')">Continuar</button>
+        </div>
+
+        <!-- ===================== ONBOARDING 3 — salário-alvo ===================== -->
+        <div class="screen" id="screen-onb-3">
+          <div class="dots"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span></div>
+          <h2 style="margin:6px 0 0;">Quanto você quer ganhar por mês?</h2>
+          <p class="muted">Seu "salário-alvo". Usamos isso pra dizer se cada mês foi bom, médio ou difícil. Pode ajustar quando quiser.</p>
+          <div class="card" style="text-align:center;">
+            <span class="muted" style="font-size:13px;">Salário-alvo</span>
+            <input class="big-input" id="input-meta" type="text" inputmode="numeric" value="4.000" oninput="onMetaInput(this)">
+          </div>
+          <div style="flex:1"></div>
+          <button class="link-btn" onclick="back()">← Voltar</button>
+          <button class="btn-primary" onclick="go('onb-4')">Continuar</button>
+        </div>
+
+        <!-- ===================== ONBOARDING 4 — baldes sugeridos ===================== -->
+        <div class="screen" id="screen-onb-4">
+          <div class="dots"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></div>
+          <h2 style="margin:6px 0 0;">Separamos esses % pra você</h2>
+          <p class="muted">Sugestão automática com base no seu regime. Pode ajustar antes de confirmar.</p>
+          <div id="sliders-onb"></div>
+          <div class="faint" id="total-onb">Total: 100%</div>
+          <div style="flex:1"></div>
+          <button class="link-btn" onclick="back()">← Voltar</button>
+          <button class="btn-primary" onclick="go('onb-5')">Confirmar divisão</button>
+        </div>
+
+        <!-- ===================== ONBOARDING 5 — primeira entrada ===================== -->
+        <div class="screen" id="screen-onb-5" style="text-align:center;justify-content:center;">
+          <div class="dots"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></div>
+          <h2>Registre sua última entrada pra começar</h2>
+          <p class="muted">Ou comece sem dados — seus baldes começam vazios.</p>
+          <div style="height:8px"></div>
+          <button class="btn-primary" onclick="go('capture-start')">📷 Capturar recibo / comprovante</button>
+          <button class="btn-secondary" onclick="go('nova-entrada')">✍️ Registrar manualmente</button>
+          <button class="link-btn" onclick="go('home')">Começar sem dados →</button>
+        </div>
+
+        <!-- ===================== HOME / DASHBOARD ===================== -->
+        <div class="screen" id="screen-home">
+          <div class="topbar">
+            <h2>Olá 👋</h2>
+            <button class="icon-btn" onclick="go('baldes-config')" title="Configurações">⚙️</button>
+          </div>
+
+          <div class="card" onclick="go('salario-detalhe')" style="cursor:pointer;">
+            <p class="muted" style="margin:0 0 4px;text-align:center;">Salário disponível em junho</p>
+            <p class="number-xl" id="home-salario">R$ 3.900</p>
+            <span class="status-pill status-green" id="home-status-pill">97% da sua meta</span>
+            <div style="height:10px"></div>
+            <div class="progress-track"><div class="progress-fill" id="home-progress" style="width:97%"></div></div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span>🛟 Fôlego financeiro</span>
+              <span style="font-weight:800;font-size:18px;">2,3 meses</span>
+            </div>
+            <p class="faint" style="margin:6px 0 0;">Tempo que você consegue se manter sem nenhum projeto novo, com base nas suas despesas fixas.</p>
+          </div>
+
+          <div class="bucket-row">
+            <div class="bucket" onclick="go('baldes-config')" style="cursor:pointer;">
+              <div class="emoji">🧾</div>
+              <div class="label">Imposto</div>
+              <div class="value">R$ 350</div>
+              <div class="gauge"><i style="width:70%;background:#FBBF24;"></i></div>
+            </div>
+            <div class="bucket" onclick="go('baldes-config')" style="cursor:pointer;">
+              <div class="emoji">🛡️</div>
+              <div class="label">Reserva</div>
+              <div class="value">R$ 1.200</div>
+              <div class="gauge"><i style="width:40%;background:#22C55E;"></i></div>
+            </div>
+            <div class="bucket" onclick="go('baldes-config')" style="cursor:pointer;">
+              <div class="emoji">🌱</div>
+              <div class="label">Reinvest.</div>
+              <div class="value">R$ 150</div>
+              <div class="gauge"><i style="width:15%;background:#22C55E;"></i></div>
+            </div>
+          </div>
+
+          <div class="alert-banner alert-green" onclick="go('alerta-imposto')">
+            <span>✓</span>
+            <span>Seu balde de imposto cobre a DAS de julho (R$76,90). Você está coberto.</span>
+          </div>
+
+          <div class="quick-actions">
+            <button class="btn-primary" onclick="go('nova-entrada')">+ Nova entrada</button>
+            <button class="btn-secondary" onclick="go('capture-start')">📷 Capturar</button>
+          </div>
+
+          <div class="footer-links">
+            <div class="footer-link" onclick="go('historico')"><span>📊 Ver histórico (12 meses)</span><span class="arrow">→</span></div>
+            <div class="footer-link" onclick="go('despesas-fixas')"><span>📌 Despesas fixas</span><span class="arrow">→</span></div>
+            <div class="footer-link" onclick="go('contracheque')"><span>🧾 Contracheque de maio</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+
+        <!-- ===================== NOVA ENTRADA ===================== -->
+        <div class="screen" id="screen-nova-entrada">
+          <div class="topbar">
+            <button class="backbtn" onclick="back()">←</button>
+            <h2>Nova entrada</h2>
+          </div>
+          <div class="card" style="text-align:center;">
+            <span class="muted" style="font-size:12px;">Valor (R$)</span>
+            <input class="big-input" id="input-valor-entrada" type="text" inputmode="decimal" placeholder="0,00" oninput="onValorEntradaInput(this)">
+          </div>
+          <div class="btn-row">
+            <div class="chip selected" style="flex:1;text-align:center;" id="tipo-receita" onclick="setTipoEntrada('receita')">Receita</div>
+            <div class="chip" style="flex:1;text-align:center;" id="tipo-despesa" onclick="setTipoEntrada('despesa')">Despesa</div>
+          </div>
+          <div class="field">
+            <label>Data</label>
+            <input type="text" value="Hoje · 18/06/2026">
+          </div>
+          <div class="field">
+            <label>De (cliente ou descrição)</label>
+            <input type="text" id="input-de-entrada" placeholder="Ex: Cliente Acme">
+          </div>
+          <div class="chips">
+            <div class="chip" onclick="document.getElementById('input-de-entrada').value='Cliente Acme'">Cliente Acme</div>
+            <div class="chip" onclick="document.getElementById('input-de-entrada').value='Cliente Beta'">Cliente Beta</div>
+            <div class="chip" onclick="document.getElementById('input-de-entrada').value='Consulta avulsa'">Consulta avulsa</div>
+          </div>
+          <div style="flex:1"></div>
+          <button class="btn-primary" onclick="registrarEntradaManual()">Registrar</button>
+        </div>
+
+        <!-- ===================== CONFIRMAÇÃO DE ENTRADA ===================== -->
+        <div class="screen" id="screen-entrada-confirmacao" style="text-align:center;">
+          <div style="font-size:42px;margin-top:8px;">✅</div>
+          <h2 id="confirmacao-titulo" style="margin:0;">R$ 5.000 divididos</h2>
+          <div class="card" id="confirmacao-splits" style="text-align:left;"></div>
+          <p class="link-btn" style="opacity:.5;cursor:default;text-decoration:none;">✏️ Editar divisão desta entrada (em breve)</p>
+          <div style="flex:1"></div>
+          <div class="btn-row">
+            <button class="btn-secondary" onclick="go('home')">Fechar</button>
+            <button class="btn-primary" onclick="go('baldes-config')">Ver meus baldes</button>
+          </div>
+        </div>
+
+        <!-- ===================== CAPTURA — início ===================== -->
+        <div class="screen" id="screen-capture-start">
+          <div class="topbar">
+            <button class="backbtn" onclick="back()">←</button>
+            <h2>Capturar lançamento</h2>
+          </div>
+          <p class="muted" style="text-align:center;">Fotografe ou importe um recibo, comprovante de PIX ou anotação manuscrita.</p>
+          <div class="btn-row">
+            <button class="btn-secondary" onclick="iniciarCaptura()">📷 Câmera</button>
+            <button class="btn-secondary" onclick="iniciarCaptura()">🖼️ Galeria</button>
+          </div>
+          <div class="card" style="height:160px;display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:12px;">
+            pré-visualização da imagem aparece aqui
+          </div>
+          <p class="faint" style="text-align:center;">✅ Esta etapa já existe no app real (CaptureScreen.tsx) — aqui simulada para a jornada completa.</p>
+        </div>
+
+        <!-- ===================== CAPTURA — carregando ===================== -->
+        <div class="screen" id="screen-capture-loading" style="align-items:center;justify-content:center;text-align:center;">
+          <div style="font-size:32px;">⏳</div>
+          <p class="muted">Lendo a imagem...</p>
+        </div>
+
+        <!-- ===================== CAPTURA — rascunho ===================== -->
+        <div class="screen" id="screen-capture-draft">
+          <div class="topbar">
+            <button class="backbtn" onclick="go('capture-start')">←</button>
+            <h2>Revisar rascunho</h2>
+          </div>
+          <div class="alert-banner alert-warn">
+            <span>⚠️</span>
+            <span>Confiança baixa na data — verifique antes de confirmar.</span>
+          </div>
+          <div class="card">
+            <p style="margin:0 0 12px;font-weight:700;font-size:13px;">Nada foi salvo ainda — revise e edite livremente</p>
+            <div class="field"><label>Valor (R$)</label><input type="text" value="350,00"></div>
+            <div style="height:10px"></div>
+            <div class="field"><label>Data</label><input type="text" value="2026-06-18"></div>
+            <div style="height:10px"></div>
+            <div class="field"><label>Tipo</label><input type="text" value="receita"></div>
+            <div style="height:10px"></div>
+            <div class="field"><label>Categoria</label><input type="text" value="Consulta — Pix"></div>
+            <div style="height:10px"></div>
+            <div class="field"><label>Descrição</label><input type="text" value="Print de comprovante PIX"></div>
+            <div style="height:10px"></div>
+            <div class="field"><label>Balde sugerido</label><input type="text" value="salario"></div>
+          </div>
+          <button class="btn-primary" onclick="confirmarCaptura()">Confirmar lançamento</button>
+        </div>
+
+        <!-- ===================== DETALHE DO SALÁRIO ===================== -->
+        <div class="screen" id="screen-salario-detalhe">
+          <div class="topbar">
+            <button class="backbtn" onclick="back()">←</button>
+            <h2>Seu salário</h2>
+          </div>
+          <div class="card" style="text-align:center;">
+            <p class="number-xl">R$ 3.900</p>
+            <p class="muted">97% do seu alvo de R$ 4.000</p>
+            <div class="progress-track"><div class="progress-fill" style="width:97%"></div></div>
+          </div>
+          <div class="card">
+            <p style="margin:0 0 8px;">Já foram <b>4 entradas</b> neste mês.</p>
+            <p style="margin:0 0 8px;">Seu balde de imposto tem <b>R$ 350</b> guardados.</p>
+            <p style="margin:0;">Sua reserva tem <b>R$ 1.200</b> (mês 2 de 3 no seu objetivo).</p>
+          </div>
+          <div style="flex:1"></div>
+          <button class="btn-primary" onclick="go('pagar-confirmacao')">Quero me pagar agora</button>
+        </div>
+
+        <!-- ===================== CONFIRMAÇÃO DE PAGAMENTO ===================== -->
+        <div class="screen" id="screen-pagar-confirmacao" style="text-align:center;justify-content:center;">
+          <div style="font-size:36px;">💸</div>
+          <h2 style="margin:8px 0;">Você pode transferir até<br><span style="color:var(--primary)">R$ 3.900</span></h2>
+          <p class="muted">Lembre-se: isso descontará do seu balde de Salário.</p>
+          <div style="height:10px"></div>
+          <div class="btn-row">
+            <button class="btn-secondary" onclick="go('salario-detalhe')">Cancelar</button>
+            <button class="btn-primary" onclick="confirmarPagamento()">Confirmar registro</button>
+          </div>
+        </div>
+
+        <!-- ===================== CONFIGURAÇÃO DE BALDES ===================== -->
+        <div class="screen" id="screen-baldes-config">
+          <div class="topbar">
+            <button class="backbtn" onclick="back()">←</button>
+            <h2>Configuração de baldes</h2>
+          </div>
+          <div class="field">
+            <label>Regime tributário</label>
+            <div class="chips" id="chips-regime-config">
+              <div class="chip selected" onclick="selectChip(this,'chips-regime-config')">MEI</div>
+              <div class="chip" onclick="selectChip(this,'chips-regime-config')">Autônomo</div>
+              <div class="chip" onclick="selectChip(this,'chips-regime-config')">Simples</div>
+            </div>
+          </div>
+          <div id="sliders-config"></div>
+          <div class="faint" id="total-config">Total: 100%</div>
+          <div style="flex:1"></div>
+          <button class="btn-primary" onclick="salvarBaldes()">Salvar alterações</button>
+        </div>
+
+        <!-- ===================== DESPESAS FIXAS ===================== -->
+        <div class="screen" id="screen-despesas-fixas">
+          <div class="topbar">
+            <button class="backbtn" onclick="back()">←</button>
+            <h2>Despesas fixas</h2>
+          </div>
+          <p class="muted">Usadas para calcular seu fôlego financeiro (runway) com precisão.</p>
+          <div class="card" id="lista-despesas"></div>
+          <div class="card">
+            <div class="field"><label>Descrição</label><input type="text" id="nova-despesa-desc" placeholder="Ex: Aluguel do escritório"></div>
+            <div style="height:8px"></div>
+            <div class="field"><label>Valor (R$)</label><input type="text" id="nova-despesa-valor" inputmode="decimal" placeholder="0,00"></div>
+            <div style="height:10px"></div>
+            <button class="btn-secondary" onclick="adicionarDespesa()">+ Adicionar despesa</button>
+          </div>
+          <div class="card tight" style="display:flex;justify-content:space-between;">
+            <span class="muted">Total mensal</span>
+            <b id="total-despesas">R$ 1.500</b>
+          </div>
+        </div>
+
+        <!-- ===================== HISTÓRICO ===================== -->
+        <div class="screen" id="screen-historico">
+          <div class="topbar">
+            <button class="backbtn" onclick="back()">←</button>
+            <h2>Histórico</h2>
+          </div>
+          <p class="muted">↑ Crescendo 12% vs. trimestre anterior</p>
+          <div class="card">
+            <div class="bars-chart" id="bars-chart"></div>
+          </div>
+          <p class="faint" style="text-align:center;">Linha tracejada = sua meta de R$ 4.000. Toque numa barra para ver detalhes do mês.</p>
+        </div>
+
+        <!-- ===================== HISTÓRICO — detalhe do mês ===================== -->
+        <div class="screen" id="screen-historico-mes-detalhe" style="text-align:center;justify-content:center;">
+          <h2 id="mes-detalhe-titulo">Maio de 2026</h2>
+          <p class="number-xl" id="mes-detalhe-valor">R$ 3.900</p>
+          <p class="muted" id="mes-detalhe-status">97% da meta daquele mês</p>
+          <div style="height:14px"></div>
+          <button class="btn-secondary" onclick="go('historico')">Voltar ao histórico</button>
+        </div>
+
+        <!-- ===================== CONTRACHEQUE ===================== -->
+        <div class="screen" id="screen-contracheque">
+          <div class="topbar">
+            <button class="backbtn" onclick="back()">←</button>
+            <h2>Contracheque</h2>
+          </div>
+          <p class="muted" style="text-align:center;">Notificação push do dia 1: "Seu salário de maio foi R$3.900 ✓"</p>
+          <div class="card">
+            <div class="split-line"><span class="muted">Salário recebido</span><b>R$ 3.900</b></div>
+            <div class="split-line"><span class="muted">Imposto reservado</span><b>R$ 350</b></div>
+            <div class="split-line"><span class="muted">Variação vs. mês anterior</span><b style="color:var(--primary)">+8%</b></div>
+            <div class="split-line"><span class="muted">Maior cliente do mês</span><b>Cliente Acme — R$1.800</b></div>
+          </div>
+          <div style="flex:1"></div>
+          <button class="btn-secondary" onclick="go('home')">Fechar</button>
+        </div>
+
+        <!-- ===================== ALERTA DE IMPOSTO ===================== -->
+        <div class="screen" id="screen-alerta-imposto">
+          <div class="topbar">
+            <button class="backbtn" onclick="back()">←</button>
+            <h2>Alerta de imposto</h2>
+          </div>
+          <p class="faint" style="text-align:center;">Demonstração — notificação 5 dias antes do vencimento da DAS.</p>
+          <div class="btn-row">
+            <button class="btn-secondary" onclick="simularImposto(true)">Simular: coberto</button>
+            <button class="btn-secondary" onclick="simularImposto(false)">Simular: insuficiente</button>
+          </div>
+          <div id="alerta-imposto-conteudo"></div>
+        </div>
+
+      </div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Mapa da jornada</h3>
+    <div class="card">
+      <b>Onboarding (≤5 telas)</b>
+      <p class="faint" style="margin:6px 0 0;">Splash → tipo de trabalho → regime tributário → salário-alvo → baldes sugeridos → primeira entrada (captura, manual ou pular) → Home.</p>
+    </div>
+    <div class="card">
+      <b>Registrar dinheiro (2 caminhos)</b>
+      <ul>
+        <li>Manual: Home → Nova entrada → Confirmação</li>
+        <li>Captura: Home → Câmera/Galeria → Rascunho (revisão obrigatória) → Confirmação</li>
+      </ul>
+    </div>
+    <div class="card">
+      <b>"Quanto posso me pagar"</b>
+      <p class="faint" style="margin:6px 0 0;">Home (toca no número) → Detalhe do salário → Quero me pagar agora → Confirmação de transferência.</p>
+    </div>
+    <div class="card">
+      <b>Apoio / configuração</b>
+      <p class="faint" style="margin:6px 0 0;">Baldes, despesas fixas e histórico são acessados pela Home e nunca bloqueiam o fluxo principal.</p>
+    </div>
+    <div class="card">
+      <b>Rituais (notificações)</b>
+      <p class="faint" style="margin:6px 0 0;">Contracheque mensal (dia 1) e alerta de imposto (5 dias antes da DAS) abrem direto nessas telas via deep link.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const state = {
+    metaSalario: 4000,
+    buckets: { salario: 0.50, imposto: 0.15, reserva: 0.25, reinvestimento: 0.10 },
+    tipoEntradaAtual: 'receita',
+    despesas: [
+      { desc:'Aluguel do escritório', valor:1200 },
+      { desc:'Ferramentas (Adobe, Figma)', valor:180 },
+      { desc:'Internet', valor:120 },
+    ],
+    historico: [2800,3100,2950,3800,4100,3700,2200,3900,4200,3950,4000,3900],
+    mesesLabel: ['Jul','Ago','Set','Out','Nov','Dez','Jan','Fev','Mar','Abr','Mai','Jun'],
+  };
+
+  let navStack = ['splash'];
+
+  function fmt(v){
+    return v.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits: 0 });
+  }
+
+  function go(id){
+    navStack.push(id);
+    render(id);
+  }
+  function back(){
+    if(navStack.length > 1) navStack.pop();
+    render(navStack[navStack.length-1]);
+  }
+  function render(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById('screen-' + id);
+    if(el) el.classList.add('active');
+    document.getElementById('screens-wrap').scrollTop = 0;
+    if(id === 'capture-loading'){
+      setTimeout(() => go('capture-draft'), 1100);
+    }
+    if(id === 'historico'){ renderBars(); }
+    if(id === 'despesas-fixas'){ renderDespesas(); }
+    if(id === 'baldes-config'){ renderSliders('sliders-config','total-config'); }
+    if(id === 'onb-4'){ renderSliders('sliders-onb','total-onb'); }
+    if(id === 'alerta-imposto'){ simularImposto(true); }
+  }
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1600);
+  }
+
+  // ---- chips (single-select within a container) ----
+  function selectChip(el, containerId, stateKey){
+    const container = document.getElementById(containerId);
+    container.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    if(stateKey) state[stateKey] = el.textContent;
+    if(containerId === 'chips-trabalho') document.getElementById('btn-onb-1').disabled = false;
+    if(containerId === 'chips-regime') document.getElementById('btn-onb-2').disabled = false;
+  }
+
+  function onMetaInput(el){
+    const num = parseFloat(el.value.replace(/\D/g,'')) || 0;
+    state.metaSalario = num;
+  }
+
+  // ---- sliders (4 buckets) ----
+  const bucketLabels = { salario:'Salário', imposto:'Imposto', reserva:'Reserva', reinvestimento:'Reinvestimento' };
+  function renderSliders(containerId, totalId){
+    const c = document.getElementById(containerId);
+    c.innerHTML = '';
+    Object.keys(state.buckets).forEach(key => {
+      const pct = Math.round(state.buckets[key]*100);
+      const row = document.createElement('div');
+      row.className = 'slider-row';
+      row.innerHTML = `
+        <div class="top"><span>${bucketLabels[key]}</span><span id="${containerId}-${key}-val">${pct}%</span></div>
+        <input type="range" min="0" max="100" value="${pct}" oninput="onSliderChange('${containerId}','${totalId}','${key}', this.value)">
+      `;
+      c.appendChild(row);
+    });
+    updateTotal(containerId, totalId);
+  }
+  function onSliderChange(containerId, totalId, key, val){
+    state.buckets[key] = parseInt(val,10)/100;
+    document.getElementById(`${containerId}-${key}-val`).textContent = val + '%';
+    updateTotal(containerId, totalId);
+  }
+  function updateTotal(containerId, totalId){
+    const total = Math.round(Object.values(state.buckets).reduce((a,b)=>a+b,0)*100);
+    const el = document.getElementById(totalId);
+    el.textContent = 'Total: ' + total + '%' + (total !== 100 ? '  ⚠️ deveria somar 100%' : '  ✓');
+    el.style.color = total === 100 ? 'var(--primary)' : 'var(--warn)';
+  }
+  function salvarBaldes(){
+    showToast('Baldes atualizados ✓');
+    setTimeout(() => go('home'), 700);
+  }
+
+  // ---- nova entrada manual ----
+  let valorEntradaAtual = 0;
+  function onValorEntradaInput(el){
+    const num = parseFloat(el.value.replace(/\./g,'').replace(',','.')) || 0;
+    valorEntradaAtual = num;
+  }
+  function setTipoEntrada(tipo){
+    state.tipoEntradaAtual = tipo;
+    document.getElementById('tipo-receita').classList.toggle('selected', tipo === 'receita');
+    document.getElementById('tipo-despesa').classList.toggle('selected', tipo === 'despesa');
+  }
+  function registrarEntradaManual(){
+    if(valorEntradaAtual <= 0){ showToastInline('Informe um valor maior que zero'); return; }
+    montarConfirmacao(valorEntradaAtual, state.tipoEntradaAtual);
+    go('entrada-confirmacao');
+  }
+  function showToastInline(msg){ showToast(msg); }
+
+  // ---- captura simulada ----
+  function iniciarCaptura(){ go('capture-loading'); }
+  function confirmarCaptura(){
+    montarConfirmacao(350, 'receita');
+    go('entrada-confirmacao');
+  }
+
+  // ---- confirmação (compartilhada entre manual e captura) ----
+  function montarConfirmacao(valor, tipo){
+    const titulo = document.getElementById('confirmacao-titulo');
+    const box = document.getElementById('confirmacao-splits');
+    if(tipo === 'despesa'){
+      titulo.textContent = fmt(valor) + ' registrados como despesa';
+      box.innerHTML = `<div class="split-line"><span>Despesa registrada</span><b>${fmt(valor)}</b></div>`;
+      return;
+    }
+    titulo.textContent = fmt(valor) + ' divididos';
+    let html = '';
+    Object.keys(state.buckets).forEach(key => {
+      const v = valor * state.buckets[key];
+      html += `<div class="split-line"><span>✓ ${bucketLabels[key]}</span><b>${fmt(v)}</b></div>`;
+    });
+    box.innerHTML = html;
+  }
+
+  // ---- pagamento ----
+  function confirmarPagamento(){
+    showToast('Transferência registrada ✓');
+    setTimeout(() => go('home'), 700);
+  }
+
+  // ---- despesas fixas ----
+  function renderDespesas(){
+    const c = document.getElementById('lista-despesas');
+    c.innerHTML = '';
+    state.despesas.forEach((d, idx) => {
+      const row = document.createElement('div');
+      row.className = 'expense-item';
+      row.innerHTML = `<span>${d.desc}</span><span style="display:flex;gap:10px;align-items:center;"><b>${fmt(d.valor)}</b><button onclick="removerDespesa(${idx})">✕</button></span>`;
+      c.appendChild(row);
+    });
+    if(state.despesas.length === 0){
+      c.innerHTML = '<p class="faint">Nenhuma despesa fixa registrada ainda.</p>';
+    }
+    atualizarTotalDespesas();
+  }
+  function removerDespesa(idx){
+    state.despesas.splice(idx,1);
+    renderDespesas();
+  }
+  function adicionarDespesa(){
+    const desc = document.getElementById('nova-despesa-desc').value.trim();
+    const valor = parseFloat(document.getElementById('nova-despesa-valor').value.replace(',','.')) || 0;
+    if(!desc || valor <= 0) { showToast('Preencha descrição e valor'); return; }
+    state.despesas.push({ desc, valor });
+    document.getElementById('nova-despesa-desc').value = '';
+    document.getElementById('nova-despesa-valor').value = '';
+    renderDespesas();
+  }
+  function atualizarTotalDespesas(){
+    const total = state.despesas.reduce((a,d)=>a+d.valor,0);
+    document.getElementById('total-despesas').textContent = fmt(total);
+  }
+
+  // ---- histórico ----
+  function renderBars(){
+    const max = Math.max(...state.historico, state.metaSalario);
+    const wrap = document.getElementById('bars-chart');
+    const targetPct = (state.metaSalario/max)*100;
+    let html = `<div class="target-line" style="bottom:${targetPct}%;">Meta R$${state.metaSalario}</div>`;
+    state.historico.forEach((v, idx) => {
+      const h = (v/max)*100;
+      const good = v >= state.metaSalario*0.9;
+      html += `<div class="bar-col ${good?'good':''}" onclick="abrirMesDetalhe(${idx})">
+        <div class="bar" style="height:${h}%;"></div>
+        <span class="m">${state.mesesLabel[idx]}</span>
+      </div>`;
+    });
+    wrap.innerHTML = html;
+  }
+  function abrirMesDetalhe(idx){
+    const valor = state.historico[idx];
+    document.getElementById('mes-detalhe-titulo').textContent = state.mesesLabel[idx] + ' de 2026';
+    document.getElementById('mes-detalhe-valor').textContent = fmt(valor);
+    const pct = Math.round((valor/state.metaSalario)*100);
+    document.getElementById('mes-detalhe-status').textContent = pct + '% da meta daquele mês';
+    go('historico-mes-detalhe');
+  }
+
+  // ---- alerta de imposto ----
+  function simularImposto(coberto){
+    const el = document.getElementById('alerta-imposto-conteudo');
+    if(coberto){
+      el.innerHTML = `<div class="alert-banner alert-green" style="cursor:default;">
+        <span>✓</span><span>Seu balde de imposto tem R$850. A DAS de setembro é R$76,90. Você está coberto!</span>
+      </div>`;
+    } else {
+      el.innerHTML = `<div class="alert-banner alert-danger" style="cursor:default;">
+        <span>⚠️</span><span>Atenção: sua DAS de setembro é R$76,90 e seu balde de imposto tem apenas R$30. Registre suas entradas de agosto para atualizar.</span>
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn-primary" onclick="go('nova-entrada')">Registrar entrada</button>`;
+    }
+  }
+
+  // init
+  renderSliders('sliders-onb','total-onb');
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
-// Schema inicial do FLUXO — ver golden source, seções 3.5/3.12/3.13/5.2.
-// AINDA NÃO MIGRADO contra um banco real (não há DATABASE_URL conectado neste
-// protótipo). Isso é a forma declarada do modelo de dados, para destravar o
-// desenvolvimento do motor de captura sem bloquear em infraestrutura de banco.
+// Schema do FLUXO — ver golden source, seções 3.5/3.12/3.13/5.2.
+// Conectado a um Supabase Postgres live (ver CLAUDE.md > Infrastructure). DDL é
+// aplicado via MCP do Supabase / dashboard, NÃO via `prisma migrate`/`db push`:
+// a DATABASE_URL aponta para o transaction pooler (6543), que não suporta DDL.
 
 generator client {
   provider = "prisma-client-js"
@@ -42,6 +42,12 @@ model User {
   email     String   @unique
   nome      String?
   regime    RegimeTributario?
+
+  // Coletados no onboarding (Fluxo 1 / US-001/US-002). Nullable porque o usuário
+  // pode "começar sem dados" e preencher depois (ver mockup, passo 5 do onboarding).
+  tipoTrabalho String? // ex. "Design", "Dev / Tech" — texto livre vindo dos chips
+  metaSalario  Float? // salário-alvo mensal; usado para o % da meta no Dashboard (US-005)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
