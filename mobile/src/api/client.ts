@@ -2,6 +2,7 @@ import type {
   CaptureExtractResponse,
   CreateEntryPayload,
   EntryRecord,
+  ListEntriesResponse,
   OrigemCaptura,
 } from "../types/entry";
 
@@ -66,4 +67,19 @@ export async function createEntry(payload: CreateEntryPayload): Promise<EntryRec
 
   const data = (await response.json()) as { entry: EntryRecord };
   return data.entry;
+}
+
+/** Lista os lançamentos do usuário + resumo (totais e divisão entre baldes). */
+export async function listEntries(): Promise<ListEntriesResponse> {
+  const response = await fetch(`${API_URL}/entries`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Falha ao carregar lançamentos (${response.status}): ${body}`);
+  }
+
+  return response.json();
 }

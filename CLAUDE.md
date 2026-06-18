@@ -52,7 +52,9 @@ Flow: `mobile/src/screens/CaptureScreen.tsx` (camera or gallery image) → `mobi
 
 `POST /entries` (`backend/src/routes/entries.ts`) persists a user-confirmed entry — it's the only write path to `Entry`. `CaptureScreen`'s confirm button validates the edited draft and calls it via `createEntry` (`mobile/src/api/client.ts`). The route is the *only* place in the codebase that sets `confirmadoPeloUsuario = true` (reaching it means the user confirmed in the UI — golden source 3.13). It maps the lowercase app enums (`receita`, `salario`, …) to the uppercase Prisma enums.
 
-Two prototype shortcuts to be aware of: (1) there's no auth yet, so every entry is attached to a single dev user upserted by `backend/src/lib/devUser.ts` (delete that file when Épico 1 / auth lands); (2) `Entry` stores a single confirmed `balde`, but the product's income-split-across-buckets model (US-004) is a dashboard computation that doesn't exist yet — this route does not split anything.
+`GET /entries` returns the user's entries (most recent first) plus a `resumo`: totals (`totalReceitas`/`totalDespesas`/`saldo`) and the per-bucket split (`baldes`). The split is computed by `backend/src/services/bucketEngine.ts` (a pure function — golden source 3.5 / US-004): each RECEITA is divided across the four buckets by the user's `BucketConfig` percentages; each DESPESA is debited from the bucket it was tagged with (`balde`), and untagged expenses fall back to `salario` — a documented prototype simplification. `Entry` itself still stores only the single confirmed `balde`; the split is a read-time computation, never persisted. The mobile `DashboardScreen` consumes this and shows the Salário bucket as the headline (US-005).
+
+One prototype shortcut to be aware of: there's no auth yet, so every entry / bucket config is attached to a single dev user upserted by `backend/src/lib/devUser.ts` (delete that file when Épico 1 / auth lands).
 
 ### Data model (`backend/prisma/schema.prisma`)
 
@@ -66,7 +68,7 @@ Stub with simplified, clearly-marked-as-non-authoritative tables for MEI / Simpl
 
 ### Mobile navigation (`mobile/src/navigation/index.tsx`)
 
-Simple stack: Onboarding → Dashboard → Capture (modal). No auth yet, so the app always starts at Onboarding. Onboarding and Dashboard are stubs (structure only); Capture is the one fully implemented screen.
+Simple stack: Onboarding → Dashboard → Capture (modal). No auth yet, so the app always starts at Onboarding. Onboarding is still a stub (structure only). Dashboard is implemented — it fetches `GET /entries` (refetching on focus, so it refreshes after a confirmed capture), shows the Salário bucket headline, the four bucket cards, period totals, and the entry list. Capture is fully implemented.
 
 ## Infrastructure (live, as of this prototype's deployment)
 

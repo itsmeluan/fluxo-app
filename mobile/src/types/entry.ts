@@ -60,14 +60,37 @@ export interface CreateEntryPayload {
   confiancaCaptura?: "alta" | "media" | "baixa" | null;
 }
 
-/** Lançamento já persistido, como devolvido pelo POST /entries. */
+/** Lançamento já persistido, como devolvido pelo POST /entries e GET /entries. */
 export interface EntryRecord {
   id: string;
   valor: number;
   data: string;
-  tipo: string;
+  tipo: string; // "RECEITA" | "DESPESA" (enum Prisma, em maiúsculas)
+  categoria: string | null;
+  descricao: string | null;
   balde: string | null;
   confirmadoPeloUsuario: boolean;
+}
+
+export interface BaldeSaldos {
+  salario: number;
+  imposto: number;
+  reserva: number;
+  reinvestimento: number;
+}
+
+/** Resumo calculado pelo backend (totais + divisão entre baldes, US-004). */
+export interface EntryResumo {
+  totalReceitas: number;
+  totalDespesas: number;
+  saldo: number;
+  baldes: BaldeSaldos;
+}
+
+/** Resposta do GET /entries — tudo que o Dashboard precisa em uma chamada. */
+export interface ListEntriesResponse {
+  entries: EntryRecord[];
+  resumo: EntryResumo;
 }
 
 export function extractionToEditableDraft(extraction: CaptureExtraction): EditableDraft {

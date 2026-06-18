@@ -21,6 +21,8 @@ import {
 } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { getDevUserId } from "../lib/devUser";
+import { getBucketConfig } from "../lib/bucketConfig";
+import { calcularResumo } from "../services/bucketEngine";
 
 // O app envia os enums em minúsculas (espelhando os tipos do motor de captura);
 // o schema Prisma usa MAIÚSCULAS. Estes mapas são a fronteira de tradução.
@@ -62,6 +64,32 @@ const bodySchema = z.object({
 });
 
 export async function entryRoutes(app: FastifyInstance) {
+  // Lista os lançamentos do usuário (mais recentes primeiro) + um resumo com
+  // totais e a divisão entre baldes (US-004) — tudo que o Dashboard precisa.
+  app.get("/entries", async (_request, reply) => {
+    try {
+      const userId = await getDevUserId();
+
+      const [entries, config] = await Promise.all([
+        prisma.entry.findMany({
+          where: { userId },
+          orderBy: { data: "desc" },
+        }),
+        getBucketConfig(userId),
+      ]);
+
+      const resumo = calcularResumo(entries, config);
+
+      return reply.send({ entries, resumo, config });
+    } catch (err) {
+      app.log.error(err);
+      return reply.status(500).send({
+        erro: "Não foi possível carregar os lançamentos.",
+        detalhe: err instanceof Error ? err.message : String(err),
+      });
+    }
+  });
+
   app.post("/entries", async (request, reply) => {
     const parsed = bodySchema.safeParse(request.body);
 
