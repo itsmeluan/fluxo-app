@@ -18,7 +18,20 @@ const MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function captureRoutes(app: FastifyInstance) {
   app.post("/capture/extract", async (request, reply) => {
-    const data = await request.file();
+    // @fastify/multipart v10 lança FST_INVALID_MULTIPART_CONTENT_TYPE quando a
+    // requisição não é multipart (em vez de retornar undefined como na v8).
+    // Capturamos para devolver o mesmo 400 amigável em vez de um 406 cru.
+    let data;
+    try {
+      data = await request.file();
+    } catch (err) {
+      if (err && typeof err === "object" && "code" in err && err.code === "FST_INVALID_MULTIPART_CONTENT_TYPE") {
+        return reply.status(400).send({
+          erro: "Nenhuma imagem enviada. Envie multipart/form-data com o campo 'imagem'.",
+        });
+      }
+      throw err;
+    }
 
     if (!data) {
       return reply.status(400).send({
