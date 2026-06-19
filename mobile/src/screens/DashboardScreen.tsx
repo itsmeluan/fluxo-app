@@ -132,9 +132,14 @@ export default function DashboardScreen() {
             </View>
           )}
 
-          <Pressable style={styles.botaoCaptura} onPress={() => navigation.navigate("Capture")}>
-            <Text style={styles.botaoCapturaTexto}>📷 Capturar recibo / comprovante</Text>
-          </Pressable>
+          <View style={styles.acoesRapidas}>
+            <Pressable style={styles.botaoPrimario} onPress={() => navigation.navigate("NovaEntrada")}>
+              <Text style={styles.botaoPrimarioTexto}>+ Nova entrada</Text>
+            </Pressable>
+            <Pressable style={styles.botaoSecundario} onPress={() => navigation.navigate("Capture")}>
+              <Text style={styles.botaoSecundarioTexto}>📷 Capturar</Text>
+            </Pressable>
+          </View>
 
           <Text style={styles.tituloLista}>Lançamentos</Text>
           {entries.length === 0 ? (
@@ -262,14 +267,25 @@ const styles = StyleSheet.create({
   totalItem: { alignItems: "center", gap: 2 },
   totalRotulo: { color: "#94A3B8", fontSize: 12 },
   totalValor: { fontSize: 15, fontWeight: "700" },
-  botaoCaptura: {
+  acoesRapidas: { flexDirection: "row", gap: 10, marginTop: 4 },
+  botaoPrimario: {
+    flex: 1,
     backgroundColor: "#22C55E",
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
-    marginTop: 4,
   },
-  botaoCapturaTexto: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
+  botaoPrimarioTexto: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
+  botaoSecundario: {
+    flex: 1,
+    backgroundColor: "#16213a",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+  botaoSecundarioTexto: { color: "#FFFFFF", fontSize: 15, fontWeight: "600" },
   tituloLista: { color: "#FFFFFF", fontSize: 16, fontWeight: "700", marginTop: 12 },
   vazio: { color: "#94A3B8", fontSize: 14, paddingVertical: 8 },
   linha: {

@@ -11,6 +11,9 @@ import {
   Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation";
 import { createEntry, extractCapture } from "../api/client";
 import {
   extractionToEditableDraft,
@@ -32,6 +35,7 @@ type ConfiancaCaptura = "alta" | "media" | "baixa";
  * persistência final.
  */
 export default function CaptureScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -136,7 +140,7 @@ export default function CaptureScreen() {
 
     setSalvando(true);
     try {
-      const entry = await createEntry({
+      await createEntry({
         valor: valorNum,
         data: draft.data.trim(),
         tipo: draft.tipo,
@@ -147,11 +151,9 @@ export default function CaptureScreen() {
         confiancaCaptura: confiancaCaptura,
       });
 
-      Alert.alert(
-        "Lançamento salvo ✓",
-        `Registrado com sucesso (id ${entry.id.slice(0, 8)}…).`
-      );
+      const tipoConfirmado = draft.tipo;
       limparFormulario();
+      navigation.navigate("EntradaConfirmacao", { valor: valorNum, tipo: tipoConfirmado });
     } catch (err) {
       Alert.alert(
         "Não foi possível salvar",

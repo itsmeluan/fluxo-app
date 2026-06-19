@@ -79,7 +79,7 @@ export default function OnboardingScreen() {
     });
   }
 
-  async function finalizar(destino: "Capture" | "Dashboard") {
+  async function finalizar(destino: "Capture" | "NovaEntrada" | "Dashboard") {
     setSalvando(true);
     try {
       await Promise.all([
@@ -93,7 +93,7 @@ export default function OnboardingScreen() {
       await marcarOnboardingConcluido();
 
       navigation.reset({ index: 0, routes: [{ name: "Dashboard" }] });
-      if (destino === "Capture") navigation.navigate("Capture");
+      if (destino !== "Dashboard") navigation.navigate(destino);
     } catch (err) {
       Alert.alert(
         "Não foi possível concluir",
@@ -194,6 +194,13 @@ export default function OnboardingScreen() {
             disabled={salvando}
           >
             {salvando ? <ActivityIndicator color="#0F172A" /> : <Text style={styles.botaoPrimarioTexto}>📷 Capturar recibo / comprovante</Text>}
+          </Pressable>
+          <Pressable
+            style={[styles.botaoSecundario, salvando && styles.desabilitado]}
+            onPress={() => finalizar("NovaEntrada")}
+            disabled={salvando}
+          >
+            <Text style={styles.botaoSecundarioTexto}>✍️ Registrar manualmente</Text>
           </Pressable>
           <Pressable style={styles.linkBtn} onPress={() => finalizar("Dashboard")} disabled={salvando}>
             <Text style={styles.linkBtnTexto}>Começar sem dados →</Text>
@@ -302,6 +309,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   botaoPrimarioTexto: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
+  botaoSecundario: {
+    backgroundColor: "#16213a",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+  botaoSecundarioTexto: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
   desabilitado: { opacity: 0.4 },
   linkBtn: { alignItems: "center", padding: 6 },
   linkBtnTexto: { color: "#22C55E", fontSize: 13, textDecorationLine: "underline" },

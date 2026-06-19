@@ -5,12 +5,16 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import DashboardScreen from "../screens/DashboardScreen";
 import CaptureScreen from "../screens/CaptureScreen";
+import NovaEntradaScreen from "../screens/NovaEntradaScreen";
+import EntradaConfirmacaoScreen from "../screens/EntradaConfirmacaoScreen";
 import { onboardingFoiConcluido } from "../lib/session";
 
 export type RootStackParamList = {
   Onboarding: undefined;
   Dashboard: undefined;
   Capture: undefined;
+  NovaEntrada: undefined;
+  EntradaConfirmacao: { valor: number; tipo: "receita" | "despesa" };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -47,9 +51,19 @@ export default function RootNavigation() {
         />
         <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ title: "FLUXO" }} />
         <Stack.Screen
+          name="NovaEntrada"
+          component={NovaEntradaScreen}
+          options={{ title: "Nova entrada" }}
+        />
+        <Stack.Screen
           name="Capture"
           component={CaptureScreen}
           options={{ title: "Capturar lançamento", presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="EntradaConfirmacao"
+          component={EntradaConfirmacaoScreen}
+          options={{ title: "Lançamento confirmado", presentation: "modal", headerBackVisible: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>
