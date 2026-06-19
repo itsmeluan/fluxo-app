@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { Session } from "@supabase/supabase-js";
+import * as Notifications from "expo-notifications";
 import { supabase } from "../lib/supabase";
+import { configurarNotificacoes } from "../lib/notificacoes";
 import LoginScreen from "../screens/LoginScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import DashboardScreen from "../screens/DashboardScreen";
@@ -36,6 +38,7 @@ export type RootStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 /**
  * Navegação. Primeiro decide pela sessão do Supabase Auth: sem sessão → Login;
@@ -53,6 +56,19 @@ export default function RootNavigation() {
     onboardingFoiConcluido().then(setOnboarded);
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  // Com sessão ativa: agenda os rituais e trata o toque na notificação (deep link).
+  useEffect(() => {
+    if (!session) return;
+    configurarNotificacoes();
+    const sub = Notifications.addNotificationResponseReceivedListener((resp) => {
+      const tela = resp.notification.request.content.data?.tela;
+      if ((tela === "Contracheque" || tela === "AlertaImposto") && navigationRef.isReady()) {
+        navigationRef.navigate(tela);
+      }
+    });
+    return () => sub.remove();
+  }, [session]);
 
   if (session === undefined || onboarded === undefined) {
     return (
@@ -73,7 +89,7 @@ export default function RootNavigation() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator initialRouteName={onboarded ? "Dashboard" : "Onboarding"}>
         <Stack.Screen
           name="Onboarding"
