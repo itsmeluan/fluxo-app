@@ -12,6 +12,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation";
 import { getBucketConfig, getMe, updateBucketConfig, updateMe } from "../api/client";
+import { supabase } from "../lib/supabase";
 import type { BucketConfig, RegimeTributario } from "../types/entry";
 
 /**
@@ -138,6 +139,10 @@ export default function BaldesConfigScreen() {
       <Pressable style={[styles.botao, salvando && styles.desabilitado]} onPress={salvar} disabled={salvando}>
         {salvando ? <ActivityIndicator color="#0F172A" /> : <Text style={styles.botaoTexto}>Salvar alterações</Text>}
       </Pressable>
+
+      <Pressable style={styles.sair} onPress={() => supabase.auth.signOut()}>
+        <Text style={styles.sairTexto}>Sair da conta</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -193,4 +198,6 @@ const styles = StyleSheet.create({
   },
   botaoTexto: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
   desabilitado: { opacity: 0.4 },
+  sair: { alignItems: "center", paddingVertical: 14, marginTop: 4 },
+  sairTexto: { color: "#F87171", fontSize: 14, fontWeight: "600" },
 });

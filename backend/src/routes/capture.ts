@@ -12,12 +12,16 @@
 
 import type { FastifyInstance } from "fastify";
 import { extractFromImage } from "../services/visionExtraction";
+import { requireUser } from "../lib/auth";
 import type { CaptureExtractResponse, OrigemCaptura } from "../types/capture";
 
 const MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function captureRoutes(app: FastifyInstance) {
   app.post("/capture/extract", async (request, reply) => {
+    // Exige autenticação antes de chamar a API de visão (que tem custo).
+    if (!(await requireUser(request, reply))) return;
+
     // @fastify/multipart v10 lança FST_INVALID_MULTIPART_CONTENT_TYPE quando a
     // requisição não é multipart (em vez de retornar undefined como na v8).
     // Capturamos para devolver o mesmo 400 amigável em vez de um 406 cru.

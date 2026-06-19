@@ -6,7 +6,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
-import { getDevUserId } from "../lib/devUser";
+import { requireUser } from "../lib/auth";
 
 const criarSchema = z.object({
   descricao: z.string().trim().min(1, "descrição obrigatória"),
@@ -14,8 +14,9 @@ const criarSchema = z.object({
 });
 
 export async function despesasFixasRoutes(app: FastifyInstance) {
-  app.get("/despesas-fixas", async (_request, reply) => {
-    const userId = await getDevUserId();
+  app.get("/despesas-fixas", async (request, reply) => {
+    const userId = await requireUser(request, reply);
+    if (!userId) return;
     const despesas = await prisma.despesaFixa.findMany({
       where: { userId },
       orderBy: { createdAt: "asc" },
@@ -25,6 +26,8 @@ export async function despesasFixasRoutes(app: FastifyInstance) {
   });
 
   app.post("/despesas-fixas", async (request, reply) => {
+    const userId = await requireUser(request, reply);
+    if (!userId) return;
     const parsed = criarSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -32,7 +35,6 @@ export async function despesasFixasRoutes(app: FastifyInstance) {
         detalhes: parsed.error.flatten().fieldErrors,
       });
     }
-    const userId = await getDevUserId();
     const despesa = await prisma.despesaFixa.create({
       data: { userId, descricao: parsed.data.descricao, valor: parsed.data.valor },
     });
@@ -40,7 +42,8 @@ export async function despesasFixasRoutes(app: FastifyInstance) {
   });
 
   app.delete<{ Params: { id: string } }>("/despesas-fixas/:id", async (request, reply) => {
-    const userId = await getDevUserId();
+    const userId = await requireUser(request, reply);
+    if (!userId) return;
     // deleteMany (não delete) para escopar por userId — evita apagar despesa de
     // outro usuário por id adivinhado quando a auth existir.
     const { count } = await prisma.despesaFixa.deleteMany({

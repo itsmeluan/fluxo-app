@@ -2,15 +2,15 @@
  * Rotas de perfil do usuário e configuração de baldes — alimentam o onboarding
  * (Fluxo 1 / US-001/US-002) e a tela de configuração de baldes (golden source 3.5).
  *
- * Sem auth ainda: tudo opera sobre o dev user (ver lib/devUser.ts). Quando o
- * Épico 1 (auth) chegar, é só trocar getDevUserId() pelo usuário da requisição.
+ * Opera sobre o usuário autenticado (ver lib/auth.ts > requireUser): o User.id
+ * é o uid do Supabase Auth, derivado do Bearer token da requisição.
  */
 
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { RegimeTributario } from "@prisma/client";
 import { prisma } from "../lib/prisma";
-import { getDevUserId } from "../lib/devUser";
+import { requireUser } from "../lib/auth";
 import { getBucketConfig } from "../lib/bucketConfig";
 
 const REGIME_MAP: Record<string, RegimeTributario> = {
@@ -43,8 +43,9 @@ const bucketSchema = z.object({
 });
 
 export async function profileRoutes(app: FastifyInstance) {
-  app.get("/me", async (_request, reply) => {
-    const userId = await getDevUserId();
+  app.get("/me", async (request, reply) => {
+    const userId = await requireUser(request, reply);
+    if (!userId) return;
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: userId },
       select: {
@@ -63,6 +64,8 @@ export async function profileRoutes(app: FastifyInstance) {
   });
 
   app.put("/me", async (request, reply) => {
+    const userId = await requireUser(request, reply);
+    if (!userId) return;
     const parsed = meSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -71,7 +74,6 @@ export async function profileRoutes(app: FastifyInstance) {
       });
     }
     const body = parsed.data;
-    const userId = await getDevUserId();
 
     const user = await prisma.user.update({
       where: { id: userId },
@@ -99,13 +101,16 @@ export async function profileRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/bucket-config", async (_request, reply) => {
-    const userId = await getDevUserId();
+  app.get("/bucket-config", async (request, reply) => {
+    const userId = await requireUser(request, reply);
+    if (!userId) return;
     const config = await getBucketConfig(userId);
     return reply.send(config);
   });
 
   app.put("/bucket-config", async (request, reply) => {
+    const userId = await requireUser(request, reply);
+    if (!userId) return;
     const parsed = bucketSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -113,7 +118,6 @@ export async function profileRoutes(app: FastifyInstance) {
         detalhes: parsed.error.flatten().fieldErrors,
       });
     }
-    const userId = await getDevUserId();
 
     // garante que a linha exista antes do update (mesmo padrão de getBucketConfig)
     await getBucketConfig(userId);

@@ -11,6 +11,8 @@ import type {
   UpdatePerfilPayload,
 } from "../types/entry";
 
+import { supabase } from "../lib/supabase";
+
 async function jsonOuErro<T>(response: Response, contexto: string): Promise<T> {
   if (!response.ok) {
     const body = await response.text();
@@ -20,6 +22,20 @@ async function jsonOuErro<T>(response: Response, contexto: string): Promise<T> {
 }
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
+
+/**
+ * Monta os headers de uma requisição já com o Bearer token da sessão do
+ * Supabase Auth. Toda chamada ao backend passa por aqui — o backend exige o
+ * token (ver backend/src/lib/auth.ts).
+ */
+async function authHeaders(extra: Record<string, string> = {}): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const headers: Record<string, string> = { Accept: "application/json", ...extra };
+  if (data.session?.access_token) {
+    headers.Authorization = `Bearer ${data.session.access_token}`;
+  }
+  return headers;
+}
 
 /**
  * Envia uma imagem para o motor de captura do backend e devolve o rascunho
@@ -44,9 +60,7 @@ export async function extractCapture(params: {
 
   const response = await fetch(`${API_URL}/capture/extract`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-    },
+    headers: await authHeaders(), // sem Content-Type: o fetch define o boundary do multipart
     body: formData,
   });
 
@@ -66,10 +80,7 @@ export async function extractCapture(params: {
 export async function createEntry(payload: CreateEntryPayload): Promise<EntryRecord> {
   const response = await fetch(`${API_URL}/entries`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+    headers: await authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
 
@@ -86,7 +97,7 @@ export async function createEntry(payload: CreateEntryPayload): Promise<EntryRec
 export async function listEntries(): Promise<ListEntriesResponse> {
   const response = await fetch(`${API_URL}/entries`, {
     method: "GET",
-    headers: { Accept: "application/json" },
+    headers: await authHeaders(),
   });
 
   return jsonOuErro<ListEntriesResponse>(response, "Falha ao carregar lançamentos");
@@ -95,7 +106,7 @@ export async function listEntries(): Promise<ListEntriesResponse> {
 /** Perfil do usuário (regime, meta de salário, tipo de trabalho). */
 export async function getMe(): Promise<Perfil> {
   const response = await fetch(`${API_URL}/me`, {
-    headers: { Accept: "application/json" },
+    headers: await authHeaders(),
   });
   return jsonOuErro<Perfil>(response, "Falha ao carregar perfil");
 }
@@ -103,7 +114,7 @@ export async function getMe(): Promise<Perfil> {
 export async function updateMe(payload: UpdatePerfilPayload): Promise<Perfil> {
   const response = await fetch(`${API_URL}/me`, {
     method: "PUT",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    headers: await authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
   return jsonOuErro<Perfil>(response, "Falha ao salvar perfil");
@@ -111,7 +122,7 @@ export async function updateMe(payload: UpdatePerfilPayload): Promise<Perfil> {
 
 export async function getBucketConfig(): Promise<BucketConfig> {
   const response = await fetch(`${API_URL}/bucket-config`, {
-    headers: { Accept: "application/json" },
+    headers: await authHeaders(),
   });
   return jsonOuErro<BucketConfig>(response, "Falha ao carregar baldes");
 }
@@ -119,7 +130,7 @@ export async function getBucketConfig(): Promise<BucketConfig> {
 export async function updateBucketConfig(config: BucketConfig): Promise<BucketConfig> {
   const response = await fetch(`${API_URL}/bucket-config`, {
     method: "PUT",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    headers: await authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(config),
   });
   return jsonOuErro<BucketConfig>(response, "Falha ao salvar baldes");
@@ -127,7 +138,7 @@ export async function updateBucketConfig(config: BucketConfig): Promise<BucketCo
 
 export async function listDespesasFixas(): Promise<ListDespesasResponse> {
   const response = await fetch(`${API_URL}/despesas-fixas`, {
-    headers: { Accept: "application/json" },
+    headers: await authHeaders(),
   });
   return jsonOuErro<ListDespesasResponse>(response, "Falha ao carregar despesas fixas");
 }
@@ -135,7 +146,7 @@ export async function listDespesasFixas(): Promise<ListDespesasResponse> {
 export async function createDespesaFixa(descricao: string, valor: number): Promise<DespesaFixa> {
   const response = await fetch(`${API_URL}/despesas-fixas`, {
     method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    headers: await authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ descricao, valor }),
   });
   const data = await jsonOuErro<{ despesa: DespesaFixa }>(response, "Falha ao adicionar despesa");
@@ -143,7 +154,10 @@ export async function createDespesaFixa(descricao: string, valor: number): Promi
 }
 
 export async function deleteDespesaFixa(id: string): Promise<void> {
-  const response = await fetch(`${API_URL}/despesas-fixas/${id}`, { method: "DELETE" });
+  const response = await fetch(`${API_URL}/despesas-fixas/${id}`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+  });
   if (!response.ok) {
     const body = await response.text();
     throw new Error(`Falha ao remover despesa (${response.status}): ${body}`);

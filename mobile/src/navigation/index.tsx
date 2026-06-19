@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
+import LoginScreen from "../screens/LoginScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import DashboardScreen from "../screens/DashboardScreen";
 import CaptureScreen from "../screens/CaptureScreen";
@@ -16,6 +19,7 @@ import ContrachequeScreen from "../screens/ContrachequeScreen";
 import { onboardingFoiConcluido } from "../lib/session";
 
 export type RootStackParamList = {
+  Login: undefined;
   Onboarding: undefined;
   Dashboard: undefined;
   Capture: undefined;
@@ -32,20 +36,23 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /**
- * Navegação do protótipo. A rota inicial depende de o usuário já ter concluído
- * o onboarding (flag em AsyncStorage — stand-in de sessão até existir auth):
- * quem já passou cai direto no Dashboard; quem é novo começa no Onboarding.
+ * Navegação. Primeiro decide pela sessão do Supabase Auth: sem sessão → Login;
+ * com sessão → app, com rota inicial dependendo de o onboarding já ter sido
+ * concluído (flag local em AsyncStorage). O onAuthStateChange troca a árvore
+ * automaticamente em login/logout.
  */
 export default function RootNavigation() {
-  const [rotaInicial, setRotaInicial] = useState<keyof RootStackParamList | null>(null);
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const [onboarded, setOnboarded] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {
-    onboardingFoiConcluido().then((concluido) =>
-      setRotaInicial(concluido ? "Dashboard" : "Onboarding")
-    );
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+    onboardingFoiConcluido().then(setOnboarded);
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  if (rotaInicial === null) {
+  if (session === undefined || onboarded === undefined) {
     return (
       <View style={styles.splash}>
         <ActivityIndicator color="#22C55E" />
@@ -53,9 +60,19 @@ export default function RootNavigation() {
     );
   }
 
+  if (!session) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={rotaInicial}>
+      <Stack.Navigator initialRouteName={onboarded ? "Dashboard" : "Onboarding"}>
         <Stack.Screen
           name="Onboarding"
           component={OnboardingScreen}

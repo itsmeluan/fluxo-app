@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FLUXO ("Seu salário, mesmo sem patrão") is a financial app for Brazilian freelancers/autônomos with irregular income. The golden source for all product decisions is `FLUXO-product-doc.md` — read it before making product/UX calls, especially section 3.13 (motor de captura / capture engine) and 3.5/5.2 (baldes / bucket model, tax regimes).
 
-This repo currently holds a Sprint 1 prototype that validates the single highest-risk piece of the product: the capture engine (camera/image → structured financial entry). Most of the rest of the app (auth, real persistence wiring, real tax math, dashboard/onboarding content) is intentionally stubbed.
+This repo started as a Sprint 1 prototype validating the highest-risk piece — the capture engine (camera/image → structured financial entry) — and has since grown the surrounding app: real persistence, Supabase email/password auth, onboarding, dashboard with bucket split + runway, manual entry, fixed expenses, history and contracheque. The tax engine (`taxEngine.ts`) remains a clearly-marked non-authoritative stub and is not yet wired to any route.
 
 ```
 FLUXO-product-doc.md                 golden source — all product documentation
@@ -56,7 +56,11 @@ Flow: `mobile/src/screens/CaptureScreen.tsx` (camera or gallery image) → `mobi
 
 `DespesaFixa` (model + `backend/src/routes/despesasFixas.ts`: `GET`/`POST`/`DELETE /despesas-fixas[/:id]`) holds recurring monthly expenses; the mobile `DespesasFixasScreen` manages them and their total feeds the fôlego calc. DELETE uses `deleteMany` scoped by `userId` (forward-compatible with auth).
 
-One prototype shortcut to be aware of: there's no auth yet, so every entry / bucket config is attached to a single dev user upserted by `backend/src/lib/devUser.ts` (delete that file when Épico 1 / auth lands).
+### Auth (`backend/src/lib/auth.ts` + `mobile/src/lib/supabase.ts`)
+
+Auth is implemented (Épico 1) via **Supabase Auth, email/password**. The mobile app authenticates directly against Supabase Auth and gets an access token; **all data still flows through the Fastify backend** with `Authorization: Bearer <token>` — the backend stays the trusted intermediary (Prisma over the service connection), so RLS isn't relied on for request scoping. `requireUser(request, reply)` validates the token by calling Supabase `GET /auth/v1/user` (60s in-memory cache) and lazily upserts the app `User` with `id = auth.uid`; every route calls it and returns early on a 401. There is no more dev user — `devUser.ts` was deleted.
+
+Supabase URL + anon/publishable key are public by design, so both `auth.ts` and `supabase.ts` carry them as in-code fallbacks (env overrides: `SUPABASE_URL`/`SUPABASE_ANON_KEY` on the backend, `EXPO_PUBLIC_SUPABASE_URL`/`EXPO_PUBLIC_SUPABASE_ANON_KEY` on mobile) — so no new Railway vars are required. **Email confirmation is currently ON** in the Supabase project: signup returns no session until the email is confirmed; `LoginScreen` handles this (shows a "confirme seu e-mail" notice). Toggle it off in the Supabase dashboard (Auth → Email → Confirm email) for a frictionless prototype signup.
 
 ### Data model (`backend/prisma/schema.prisma`)
 
@@ -70,7 +74,7 @@ Stub with simplified, clearly-marked-as-non-authoritative tables for MEI / Simpl
 
 ### Mobile navigation (`mobile/src/navigation/index.tsx`)
 
-Simple stack: Onboarding → Dashboard → Capture (modal). There's no real auth, but `mobile/src/lib/session.ts` persists an "onboarding concluído" flag in AsyncStorage; `navigation/index.tsx` reads it on boot to pick the initial route (returning users land on Dashboard, new users on Onboarding). All three screens are implemented:
+`navigation/index.tsx` first gates on the Supabase Auth session: no session → `Login`; session present → the app stack, with the initial route chosen from the local "onboarding concluído" flag (`mobile/src/lib/session.ts`, AsyncStorage) — returning users land on Dashboard, new users on Onboarding. `onAuthStateChange` swaps the tree on login/logout (logout lives in `BaldesConfigScreen`). Note the onboarding flag is device-local, not per-account — a known prototype simplification. Screens (Login + Onboarding → Dashboard → Capture/NovaEntrada/EntradaConfirmacao/SalarioDetalhe/BaldesConfig/DespesasFixas/Historico/HistoricoMesDetalhe/Contracheque):
 - **Onboarding** — 5-step wizard (tipo de trabalho → regime → meta de salário → divisão de baldes → primeira entrada). On finish it persists the profile (`PUT /me`) and bucket percentages (`PUT /bucket-config`), marks the session, and routes to Dashboard (or Capture). Bucket percentages use −/+ steppers (5% increments) rather than sliders — deliberate, to avoid a native slider dependency.
 - **Dashboard** — fetches `GET /entries` + `GET /me` on focus (refreshes after a confirmed capture); shows the Salário headline with a status pill + progress bar against `metaSalario`, the bucket cards, period totals, and the entry list. The fôlego/runway card is an honest "em breve" placeholder (depends on DespesaFixa, which doesn't exist yet).
 - **Capture** — fully implemented.

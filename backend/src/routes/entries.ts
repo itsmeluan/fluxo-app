@@ -20,7 +20,7 @@ import {
   TipoLancamento,
 } from "@prisma/client";
 import { prisma } from "../lib/prisma";
-import { getDevUserId } from "../lib/devUser";
+import { requireUser } from "../lib/auth";
 import { getBucketConfig } from "../lib/bucketConfig";
 import { calcularResumo } from "../services/bucketEngine";
 
@@ -66,10 +66,10 @@ const bodySchema = z.object({
 export async function entryRoutes(app: FastifyInstance) {
   // Lista os lançamentos do usuário (mais recentes primeiro) + um resumo com
   // totais e a divisão entre baldes (US-004) — tudo que o Dashboard precisa.
-  app.get("/entries", async (_request, reply) => {
+  app.get("/entries", async (request, reply) => {
+    const userId = await requireUser(request, reply);
+    if (!userId) return;
     try {
-      const userId = await getDevUserId();
-
       const [entries, config, despesasAgg] = await Promise.all([
         prisma.entry.findMany({
           where: { userId },
@@ -92,6 +92,9 @@ export async function entryRoutes(app: FastifyInstance) {
   });
 
   app.post("/entries", async (request, reply) => {
+    const userId = await requireUser(request, reply);
+    if (!userId) return;
+
     const parsed = bodySchema.safeParse(request.body);
 
     if (!parsed.success) {
@@ -104,8 +107,6 @@ export async function entryRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     try {
-      const userId = await getDevUserId();
-
       const entry = await prisma.entry.create({
         data: {
           userId,
