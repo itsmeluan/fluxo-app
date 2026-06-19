@@ -99,6 +99,17 @@ export interface DespesaFixa {
   valor: number;
 }
 
+/** Resposta do GET /alerta-imposto (estimativa não-autoritativa — ver taxEngine). */
+export interface AlertaImposto {
+  regime: RegimeTributario | null;
+  saldoBaldeImposto: number;
+  valorReservar: number | null;
+  coberto: boolean | null; // null quando não há regime definido
+  aliquotaEfetiva: number | null;
+  detalhe: string;
+  receitaBrutaMes?: number;
+}
+
 export interface ListDespesasResponse {
   despesas: DespesaFixa[];
   totalMensal: number;

@@ -1,4 +1,5 @@
 import type {
+  AlertaImposto,
   BucketConfig,
   CaptureExtractResponse,
   CreateEntryPayload,
@@ -162,4 +163,12 @@ export async function deleteDespesaFixa(id: string): Promise<void> {
     const body = await response.text();
     throw new Error(`Falha ao remover despesa (${response.status}): ${body}`);
   }
+}
+
+/** Estimativa de imposto vs. saldo do balde (não-autoritativa — ver taxEngine). */
+export async function getAlertaImposto(): Promise<AlertaImposto> {
+  const response = await fetch(`${API_URL}/alerta-imposto`, {
+    headers: await authHeaders(),
+  });
+  return jsonOuErro<AlertaImposto>(response, "Falha ao carregar alerta de imposto");
 }

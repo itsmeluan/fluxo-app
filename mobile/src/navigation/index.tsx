@@ -16,6 +16,7 @@ import SalarioDetalheScreen from "../screens/SalarioDetalheScreen";
 import HistoricoScreen from "../screens/HistoricoScreen";
 import HistoricoMesDetalheScreen from "../screens/HistoricoMesDetalheScreen";
 import ContrachequeScreen from "../screens/ContrachequeScreen";
+import AlertaImpostoScreen from "../screens/AlertaImpostoScreen";
 import { onboardingFoiConcluido } from "../lib/session";
 
 export type RootStackParamList = {
@@ -31,6 +32,7 @@ export type RootStackParamList = {
   Historico: undefined;
   HistoricoMesDetalhe: { ano: number; mes: number; valor: number; pct: number | null };
   Contracheque: undefined;
+  AlertaImposto: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -116,6 +118,7 @@ export default function RootNavigation() {
           options={{ title: "Detalhe do mês" }}
         />
         <Stack.Screen name="Contracheque" component={ContrachequeScreen} options={{ title: "Contracheque" }} />
+        <Stack.Screen name="AlertaImposto" component={AlertaImpostoScreen} options={{ title: "Alerta de imposto" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

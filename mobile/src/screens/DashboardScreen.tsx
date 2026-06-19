@@ -11,8 +11,8 @@ import {
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation";
-import { getMe, listEntries } from "../api/client";
-import type { BaldeSaldos, EntryRecord, EntryResumo, Perfil } from "../types/entry";
+import { getAlertaImposto, getMe, listEntries } from "../api/client";
+import type { AlertaImposto, BaldeSaldos, EntryRecord, EntryResumo, Perfil } from "../types/entry";
 
 /**
  * Dashboard / Home (golden source 3.4/3.5, US-004/US-005) — visual alinhado ao
@@ -30,14 +30,16 @@ export default function DashboardScreen() {
   const [entries, setEntries] = useState<EntryRecord[]>([]);
   const [resumo, setResumo] = useState<EntryResumo | null>(null);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
+  const [alerta, setAlerta] = useState<AlertaImposto | null>(null);
 
   const carregar = useCallback(async () => {
     setErro(null);
     try {
-      const [dados, me] = await Promise.all([listEntries(), getMe()]);
+      const [dados, me, alertaImposto] = await Promise.all([listEntries(), getMe(), getAlertaImposto()]);
       setEntries(dados.entries);
       setResumo(dados.resumo);
       setPerfil(me);
+      setAlerta(alertaImposto);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao carregar os dados.");
     }
@@ -128,6 +130,20 @@ export default function DashboardScreen() {
               <BucketCard emoji="🧾" label="Imposto" valor={resumo.baldes.imposto} />
               <BucketCard emoji="🛡️" label="Reserva" valor={resumo.baldes.reserva} />
               <BucketCard emoji="🌱" label="Reinvest." valor={resumo.baldes.reinvestimento} />
+            </Pressable>
+          )}
+
+          {alerta && alerta.coberto !== null && (
+            <Pressable
+              style={[styles.bannerImposto, alerta.coberto ? styles.bannerOk : styles.bannerDanger]}
+              onPress={() => navigation.navigate("AlertaImposto")}
+            >
+              <Text style={styles.bannerEmoji}>{alerta.coberto ? "✓" : "⚠️"}</Text>
+              <Text style={styles.bannerTexto}>
+                {alerta.coberto
+                  ? `Seu balde de imposto cobre a estimativa de ${formatBRL(alerta.valorReservar ?? 0)} deste mês.`
+                  : `Seu balde de imposto pode não cobrir a estimativa de ${formatBRL(alerta.valorReservar ?? 0)}. Toque para ver.`}
+              </Text>
             </Pressable>
           )}
 
@@ -280,6 +296,11 @@ const styles = StyleSheet.create({
   bucketEmoji: { fontSize: 18 },
   bucketLabel: { fontSize: 11, color: "#94A3B8" },
   bucketValor: { fontSize: 13, color: "#FFFFFF", fontWeight: "700" },
+  bannerImposto: { flexDirection: "row", gap: 8, alignItems: "flex-start", borderRadius: 14, padding: 12 },
+  bannerOk: { backgroundColor: "rgba(34,197,94,0.12)" },
+  bannerDanger: { backgroundColor: "rgba(248,113,113,0.12)" },
+  bannerEmoji: { fontSize: 14 },
+  bannerTexto: { color: "#E2E8F0", fontSize: 12, flex: 1, lineHeight: 17 },
   totais: {
     flexDirection: "row",
     justifyContent: "space-between",

@@ -70,7 +70,7 @@ The schema file's header comment says persistence isn't connected — that's now
 
 ### Tax engine (`backend/src/services/taxEngine.ts`)
 
-Stub with simplified, clearly-marked-as-non-authoritative tables for MEI / Simples Nacional / carnê-leão. Do not treat the constants in this file as correct tax figures — they're placeholders to unblock prototype work, explicitly flagged with TODOs for confirming current-year values.
+Simplified, clearly-marked-as-non-authoritative tables for MEI / Simples Nacional / carnê-leão. Do not treat the constants in this file as correct tax figures — they're placeholders, flagged with TODOs for confirming current-year values. `calcularImposto` is wired to `GET /alerta-imposto` (`backend/src/routes/imposto.ts`), which compares the estimated monthly tax against the imposto bucket balance (`coberto`) for the user's `regime`; `null` regime returns a "defina seu regime" payload. The mobile `AlertaImpostoScreen` renders it (green/red/CTA) and the Dashboard shows a tappable banner. The screen copy reinforces these are estimates, not fiscal advice.
 
 ### Mobile navigation (`mobile/src/navigation/index.tsx`)
 
