@@ -39,7 +39,7 @@ export default function NovaEntradaScreen() {
 
     setSalvando(true);
     try {
-      await createEntry({
+      const entry = await createEntry({
         valor: valorNum,
         data: hoje,
         tipo,
@@ -50,7 +50,7 @@ export default function NovaEntradaScreen() {
         balde: "indefinido",
         origem: "manual",
       });
-      navigation.navigate("EntradaConfirmacao", { valor: valorNum, tipo });
+      navigation.navigate("EntradaConfirmacao", { entryId: entry.id, valor: valorNum, tipo });
     } catch (err) {
       Alert.alert(
         "Não foi possível registrar",

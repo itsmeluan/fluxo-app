@@ -48,6 +48,34 @@ interface EntryParaResumo {
   valor: number;
   tipo: TipoLancamento;
   balde: BaldeTipo | null;
+  // Override de divisão por lançamento (só RECEITA). Quando os quatro estão
+  // presentes, têm prioridade sobre o BucketConfig do usuário.
+  splitSalario?: number | null;
+  splitImposto?: number | null;
+  splitReserva?: number | null;
+  splitReinvestimento?: number | null;
+}
+
+/** Usa o override do lançamento se completo; senão, o config global do usuário. */
+function percentuaisDoLancamento(
+  entry: EntryParaResumo,
+  config: BaldePercentuais
+): BaldePercentuais {
+  const { splitSalario, splitImposto, splitReserva, splitReinvestimento } = entry;
+  if (
+    splitSalario != null &&
+    splitImposto != null &&
+    splitReserva != null &&
+    splitReinvestimento != null
+  ) {
+    return {
+      percentSalario: splitSalario,
+      percentImposto: splitImposto,
+      percentReserva: splitReserva,
+      percentReinvestimento: splitReinvestimento,
+    };
+  }
+  return config;
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -77,10 +105,11 @@ export function calcularResumo(
   for (const entry of entries) {
     if (entry.tipo === TipoLancamento.RECEITA) {
       totalReceitas += entry.valor;
-      baldes.salario += entry.valor * config.percentSalario;
-      baldes.imposto += entry.valor * config.percentImposto;
-      baldes.reserva += entry.valor * config.percentReserva;
-      baldes.reinvestimento += entry.valor * config.percentReinvestimento;
+      const p = percentuaisDoLancamento(entry, config);
+      baldes.salario += entry.valor * p.percentSalario;
+      baldes.imposto += entry.valor * p.percentImposto;
+      baldes.reserva += entry.valor * p.percentReserva;
+      baldes.reinvestimento += entry.valor * p.percentReinvestimento;
     } else {
       totalDespesas += entry.valor;
       const alvo = baldeDaDespesa(entry.balde);

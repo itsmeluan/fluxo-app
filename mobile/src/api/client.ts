@@ -165,6 +165,22 @@ export async function deleteDespesaFixa(id: string): Promise<void> {
   }
 }
 
+/** Sobrescreve a divisão entre baldes de um lançamento específico (só receita). */
+export async function updateEntrySplit(
+  id: string,
+  split: { salario: number; imposto: number; reserva: number; reinvestimento: number }
+): Promise<void> {
+  const response = await fetch(`${API_URL}/entries/${id}/split`, {
+    method: "PATCH",
+    headers: await authHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify(split),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Falha ao salvar divisão (${response.status}): ${body}`);
+  }
+}
+
 /** Estimativa de imposto vs. saldo do balde (não-autoritativa — ver taxEngine). */
 export async function getAlertaImposto(): Promise<AlertaImposto> {
   const response = await fetch(`${API_URL}/alerta-imposto`, {

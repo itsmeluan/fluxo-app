@@ -134,4 +134,40 @@ export async function entryRoutes(app: FastifyInstance) {
       });
     }
   });
+
+  // Override da divisão de UM lançamento (só faz sentido para receita). Os
+  // quatro percentuais passam a valer para esse lançamento no motor de baldes.
+  const splitSchema = z.object({
+    salario: z.number().min(0).max(1),
+    imposto: z.number().min(0).max(1),
+    reserva: z.number().min(0).max(1),
+    reinvestimento: z.number().min(0).max(1),
+  });
+
+  app.patch<{ Params: { id: string } }>("/entries/:id/split", async (request, reply) => {
+    const userId = await requireUser(request, reply);
+    if (!userId) return;
+
+    const parsed = splitSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        erro: "Divisão inválida (cada percentual entre 0 e 1).",
+        detalhes: parsed.error.flatten().fieldErrors,
+      });
+    }
+    const s = parsed.data;
+
+    // updateMany escopado por userId — não atualiza lançamento de outro usuário.
+    const { count } = await prisma.entry.updateMany({
+      where: { id: request.params.id, userId },
+      data: {
+        splitSalario: s.salario,
+        splitImposto: s.imposto,
+        splitReserva: s.reserva,
+        splitReinvestimento: s.reinvestimento,
+      },
+    });
+    if (count === 0) return reply.status(404).send({ erro: "Lançamento não encontrado." });
+    return reply.status(204).send();
+  });
 }

@@ -104,6 +104,14 @@ model Entry {
   confiancaCaptura  String? // "alta" | "media" | "baixa" — só relevante p/ capturas via imagem
   confirmadoPeloUsuario Boolean @default(false) // nunca true automaticamente — ver princípio de confiança, 3.13
 
+  // Override de divisão por lançamento (só RECEITA). Quando os quatro estão
+  // preenchidos, o motor de baldes usa estes percentuais em vez do BucketConfig
+  // global; quando null, vale o config do usuário. Ver bucketEngine.
+  splitSalario        Float?
+  splitImposto        Float?
+  splitReserva        Float?
+  splitReinvestimento Float?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

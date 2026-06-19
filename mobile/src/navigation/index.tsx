@@ -25,7 +25,7 @@ export type RootStackParamList = {
   Dashboard: undefined;
   Capture: undefined;
   NovaEntrada: undefined;
-  EntradaConfirmacao: { valor: number; tipo: "receita" | "despesa" };
+  EntradaConfirmacao: { entryId: string; valor: number; tipo: "receita" | "despesa" };
   DespesasFixas: undefined;
   BaldesConfig: undefined;
   SalarioDetalhe: undefined;

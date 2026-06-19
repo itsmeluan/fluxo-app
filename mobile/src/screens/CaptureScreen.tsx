@@ -140,7 +140,7 @@ export default function CaptureScreen() {
 
     setSalvando(true);
     try {
-      await createEntry({
+      const entry = await createEntry({
         valor: valorNum,
         data: draft.data.trim(),
         tipo: draft.tipo,
@@ -153,7 +153,7 @@ export default function CaptureScreen() {
 
       const tipoConfirmado = draft.tipo;
       limparFormulario();
-      navigation.navigate("EntradaConfirmacao", { valor: valorNum, tipo: tipoConfirmado });
+      navigation.navigate("EntradaConfirmacao", { entryId: entry.id, valor: valorNum, tipo: tipoConfirmado });
     } catch (err) {
       Alert.alert(
         "Não foi possível salvar",
