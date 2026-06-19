@@ -156,6 +156,12 @@ export default function DashboardScreen() {
           ) : (
             entries.map((entry) => <LinhaEntry key={entry.id} entry={entry} />)
           )}
+
+          <View style={styles.rodape}>
+            <FooterLink texto="📊 Ver histórico (12 meses)" onPress={() => navigation.navigate("Historico")} />
+            <FooterLink texto="📌 Despesas fixas" onPress={() => navigation.navigate("DespesasFixas")} />
+            <FooterLink texto="🧾 Contracheque do mês passado" onPress={() => navigation.navigate("Contracheque")} />
+          </View>
         </>
       )}
     </ScrollView>
@@ -166,6 +172,15 @@ function statusDaMeta(pct: number | null) {
   if (pct === null || pct >= 90) return { cor: "#22C55E", fundo: "rgba(34,197,94,0.15)" };
   if (pct >= 50) return { cor: "#FBBF24", fundo: "rgba(251,191,36,0.15)" };
   return { cor: "#F87171", fundo: "rgba(248,113,113,0.15)" };
+}
+
+function FooterLink({ texto, onPress }: { texto: string; onPress: () => void }) {
+  return (
+    <Pressable style={styles.footerLink} onPress={onPress}>
+      <Text style={styles.footerLinkTexto}>{texto}</Text>
+      <Text style={styles.footerLinkSeta}>→</Text>
+    </Pressable>
+  );
 }
 
 function BucketCard({ emoji, label, valor }: { emoji: string; label: string; valor: number }) {
@@ -296,6 +311,20 @@ const styles = StyleSheet.create({
   botaoSecundarioTexto: { color: "#FFFFFF", fontSize: 15, fontWeight: "600" },
   tituloLista: { color: "#FFFFFF", fontSize: 16, fontWeight: "700", marginTop: 12 },
   vazio: { color: "#94A3B8", fontSize: 14, paddingVertical: 8 },
+  rodape: { gap: 10, marginTop: 12 },
+  footerLink: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#1E293B",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+  },
+  footerLinkTexto: { color: "#E2E8F0", fontSize: 13 },
+  footerLinkSeta: { color: "#94A3B8", fontSize: 13 },
   linha: {
     flexDirection: "row",
     justifyContent: "space-between",

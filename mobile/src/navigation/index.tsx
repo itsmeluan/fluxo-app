@@ -10,6 +10,9 @@ import EntradaConfirmacaoScreen from "../screens/EntradaConfirmacaoScreen";
 import DespesasFixasScreen from "../screens/DespesasFixasScreen";
 import BaldesConfigScreen from "../screens/BaldesConfigScreen";
 import SalarioDetalheScreen from "../screens/SalarioDetalheScreen";
+import HistoricoScreen from "../screens/HistoricoScreen";
+import HistoricoMesDetalheScreen from "../screens/HistoricoMesDetalheScreen";
+import ContrachequeScreen from "../screens/ContrachequeScreen";
 import { onboardingFoiConcluido } from "../lib/session";
 
 export type RootStackParamList = {
@@ -21,6 +24,9 @@ export type RootStackParamList = {
   DespesasFixas: undefined;
   BaldesConfig: undefined;
   SalarioDetalhe: undefined;
+  Historico: undefined;
+  HistoricoMesDetalhe: { ano: number; mes: number; valor: number; pct: number | null };
+  Contracheque: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -86,6 +92,13 @@ export default function RootNavigation() {
           component={SalarioDetalheScreen}
           options={{ title: "Seu salário" }}
         />
+        <Stack.Screen name="Historico" component={HistoricoScreen} options={{ title: "Histórico" }} />
+        <Stack.Screen
+          name="HistoricoMesDetalhe"
+          component={HistoricoMesDetalheScreen}
+          options={{ title: "Detalhe do mês" }}
+        />
+        <Stack.Screen name="Contracheque" component={ContrachequeScreen} options={{ title: "Contracheque" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
