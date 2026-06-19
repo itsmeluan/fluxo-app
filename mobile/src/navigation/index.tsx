@@ -8,6 +8,8 @@ import CaptureScreen from "../screens/CaptureScreen";
 import NovaEntradaScreen from "../screens/NovaEntradaScreen";
 import EntradaConfirmacaoScreen from "../screens/EntradaConfirmacaoScreen";
 import DespesasFixasScreen from "../screens/DespesasFixasScreen";
+import BaldesConfigScreen from "../screens/BaldesConfigScreen";
+import SalarioDetalheScreen from "../screens/SalarioDetalheScreen";
 import { onboardingFoiConcluido } from "../lib/session";
 
 export type RootStackParamList = {
@@ -17,6 +19,8 @@ export type RootStackParamList = {
   NovaEntrada: undefined;
   EntradaConfirmacao: { valor: number; tipo: "receita" | "despesa" };
   DespesasFixas: undefined;
+  BaldesConfig: undefined;
+  SalarioDetalhe: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -71,6 +75,16 @@ export default function RootNavigation() {
           name="DespesasFixas"
           component={DespesasFixasScreen}
           options={{ title: "Despesas fixas" }}
+        />
+        <Stack.Screen
+          name="BaldesConfig"
+          component={BaldesConfigScreen}
+          options={{ title: "Configuração de baldes" }}
+        />
+        <Stack.Screen
+          name="SalarioDetalhe"
+          component={SalarioDetalheScreen}
+          options={{ title: "Seu salário" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

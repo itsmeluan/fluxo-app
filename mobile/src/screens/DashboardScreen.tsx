@@ -85,7 +85,7 @@ export default function DashboardScreen() {
         <>
           <Text style={styles.saudacao}>Olá 👋</Text>
 
-          <View style={styles.cardSalario}>
+          <Pressable style={styles.cardSalario} onPress={() => navigation.navigate("SalarioDetalhe")}>
             <Text style={styles.cardSalarioLabel}>Salário disponível</Text>
             <Text style={styles.valorSalario}>{formatBRL(salario)}</Text>
             {pct !== null && (
@@ -103,7 +103,7 @@ export default function DashboardScreen() {
             {pct === null && (
               <Text style={styles.semMeta}>Defina sua meta de salário no onboarding para acompanhar o progresso.</Text>
             )}
-          </View>
+          </Pressable>
 
           <Pressable style={styles.cardFolego} onPress={() => navigation.navigate("DespesasFixas")}>
             <View style={styles.folegoTopo}>
@@ -124,11 +124,11 @@ export default function DashboardScreen() {
           </Pressable>
 
           {resumo && (
-            <View style={styles.bucketRow}>
+            <Pressable style={styles.bucketRow} onPress={() => navigation.navigate("BaldesConfig")}>
               <BucketCard emoji="🧾" label="Imposto" valor={resumo.baldes.imposto} />
               <BucketCard emoji="🛡️" label="Reserva" valor={resumo.baldes.reserva} />
               <BucketCard emoji="🌱" label="Reinvest." valor={resumo.baldes.reinvestimento} />
-            </View>
+            </Pressable>
           )}
 
           {resumo && (
