@@ -105,16 +105,23 @@ export default function DashboardScreen() {
             )}
           </View>
 
-          <View style={styles.cardFolego}>
+          <Pressable style={styles.cardFolego} onPress={() => navigation.navigate("DespesasFixas")}>
             <View style={styles.folegoTopo}>
               <Text style={styles.folegoTitulo}>🛟 Fôlego financeiro</Text>
-              <Text style={styles.folegoEmBreve}>em breve</Text>
+              {resumo?.folego.meses != null ? (
+                <Text style={styles.folegoMeses}>
+                  {resumo.folego.meses.toLocaleString("pt-BR")} {resumo.folego.meses === 1 ? "mês" : "meses"}
+                </Text>
+              ) : (
+                <Text style={styles.folegoEmBreve}>configurar →</Text>
+              )}
             </View>
             <Text style={styles.folegoSub}>
-              Quando você cadastrar suas despesas fixas, mostramos por quantos meses dá pra se manter
-              sem nenhum projeto novo.
+              {resumo?.folego.meses != null
+                ? `Tempo que você se mantém sem nova receita, com base em ${formatBRL(resumo.folego.despesasFixasMensais)}/mês de despesas fixas.`
+                : "Cadastre suas despesas fixas para calcular por quantos meses dá pra se manter sem nenhum projeto novo."}
             </Text>
-          </View>
+          </Pressable>
 
           {resumo && (
             <View style={styles.bucketRow}>
@@ -241,7 +248,8 @@ const styles = StyleSheet.create({
   },
   folegoTopo: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   folegoTitulo: { color: "#E2E8F0", fontSize: 14, fontWeight: "600" },
-  folegoEmBreve: { color: "#64748B", fontSize: 11 },
+  folegoMeses: { color: "#FFFFFF", fontSize: 18, fontWeight: "800" },
+  folegoEmBreve: { color: "#22C55E", fontSize: 12 },
   folegoSub: { color: "#64748B", fontSize: 12, lineHeight: 17 },
   bucketRow: { flexDirection: "row", gap: 10 },
   bucket: {

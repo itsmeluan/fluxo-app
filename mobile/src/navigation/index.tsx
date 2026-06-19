@@ -7,6 +7,7 @@ import DashboardScreen from "../screens/DashboardScreen";
 import CaptureScreen from "../screens/CaptureScreen";
 import NovaEntradaScreen from "../screens/NovaEntradaScreen";
 import EntradaConfirmacaoScreen from "../screens/EntradaConfirmacaoScreen";
+import DespesasFixasScreen from "../screens/DespesasFixasScreen";
 import { onboardingFoiConcluido } from "../lib/session";
 
 export type RootStackParamList = {
@@ -15,6 +16,7 @@ export type RootStackParamList = {
   Capture: undefined;
   NovaEntrada: undefined;
   EntradaConfirmacao: { valor: number; tipo: "receita" | "despesa" };
+  DespesasFixas: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -64,6 +66,11 @@ export default function RootNavigation() {
           name="EntradaConfirmacao"
           component={EntradaConfirmacaoScreen}
           options={{ title: "Lançamento confirmado", presentation: "modal", headerBackVisible: false }}
+        />
+        <Stack.Screen
+          name="DespesasFixas"
+          component={DespesasFixasScreen}
+          options={{ title: "Despesas fixas" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

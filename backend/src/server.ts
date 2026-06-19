@@ -5,6 +5,7 @@ import multipart from "@fastify/multipart";
 import { captureRoutes } from "./routes/capture";
 import { entryRoutes } from "./routes/entries";
 import { profileRoutes } from "./routes/profile";
+import { despesasFixasRoutes } from "./routes/despesasFixas";
 
 const app = Fastify({ logger: true });
 
@@ -19,6 +20,7 @@ async function main() {
   await app.register(captureRoutes);
   await app.register(entryRoutes);
   await app.register(profileRoutes);
+  await app.register(despesasFixasRoutes);
 
   const port = Number(process.env.PORT) || 3000;
   await app.listen({ port, host: "0.0.0.0" });

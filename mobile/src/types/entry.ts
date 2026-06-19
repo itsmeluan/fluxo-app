@@ -79,12 +79,29 @@ export interface BaldeSaldos {
   reinvestimento: number;
 }
 
-/** Resumo calculado pelo backend (totais + divisão entre baldes, US-004). */
+export interface Folego {
+  meses: number | null; // null = sem despesas fixas cadastradas
+  despesasFixasMensais: number;
+}
+
+/** Resumo calculado pelo backend (totais + divisão entre baldes + fôlego). */
 export interface EntryResumo {
   totalReceitas: number;
   totalDespesas: number;
   saldo: number;
   baldes: BaldeSaldos;
+  folego: Folego;
+}
+
+export interface DespesaFixa {
+  id: string;
+  descricao: string;
+  valor: number;
+}
+
+export interface ListDespesasResponse {
+  despesas: DespesaFixa[];
+  totalMensal: number;
 }
 
 /** Resposta do GET /entries — tudo que o Dashboard precisa em uma chamada. */

@@ -2,7 +2,9 @@ import type {
   BucketConfig,
   CaptureExtractResponse,
   CreateEntryPayload,
+  DespesaFixa,
   EntryRecord,
+  ListDespesasResponse,
   ListEntriesResponse,
   OrigemCaptura,
   Perfil,
@@ -121,4 +123,29 @@ export async function updateBucketConfig(config: BucketConfig): Promise<BucketCo
     body: JSON.stringify(config),
   });
   return jsonOuErro<BucketConfig>(response, "Falha ao salvar baldes");
+}
+
+export async function listDespesasFixas(): Promise<ListDespesasResponse> {
+  const response = await fetch(`${API_URL}/despesas-fixas`, {
+    headers: { Accept: "application/json" },
+  });
+  return jsonOuErro<ListDespesasResponse>(response, "Falha ao carregar despesas fixas");
+}
+
+export async function createDespesaFixa(descricao: string, valor: number): Promise<DespesaFixa> {
+  const response = await fetch(`${API_URL}/despesas-fixas`, {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ descricao, valor }),
+  });
+  const data = await jsonOuErro<{ despesa: DespesaFixa }>(response, "Falha ao adicionar despesa");
+  return data.despesa;
+}
+
+export async function deleteDespesaFixa(id: string): Promise<void> {
+  const response = await fetch(`${API_URL}/despesas-fixas/${id}`, { method: "DELETE" });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Falha ao remover despesa (${response.status}): ${body}`);
+  }
 }

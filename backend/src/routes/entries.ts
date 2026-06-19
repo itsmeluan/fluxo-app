@@ -70,15 +70,16 @@ export async function entryRoutes(app: FastifyInstance) {
     try {
       const userId = await getDevUserId();
 
-      const [entries, config] = await Promise.all([
+      const [entries, config, despesasAgg] = await Promise.all([
         prisma.entry.findMany({
           where: { userId },
           orderBy: { data: "desc" },
         }),
         getBucketConfig(userId),
+        prisma.despesaFixa.aggregate({ where: { userId }, _sum: { valor: true } }),
       ]);
 
-      const resumo = calcularResumo(entries, config);
+      const resumo = calcularResumo(entries, config, despesasAgg._sum.valor ?? 0);
 
       return reply.send({ entries, resumo, config });
     } catch (err) {

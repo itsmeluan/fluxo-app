@@ -51,8 +51,23 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  entries      Entry[]
-  bucketConfig BucketConfig?
+  entries       Entry[]
+  bucketConfig  BucketConfig?
+  despesasFixas DespesaFixa[]
+}
+
+/// Despesa recorrente mensal (aluguel, ferramentas, internet…). Insumo do
+/// cálculo de fôlego/runway no Dashboard. Ver golden source 3.5/5.2 e mockup §3.9.
+model DespesaFixa {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  descricao String
+  valor     Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 /// Configuração de baldes do usuário (% de cada recebimento que vai para cada balde).

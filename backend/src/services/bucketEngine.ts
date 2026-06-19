@@ -29,11 +29,19 @@ export interface BaldeSaldos {
   reinvestimento: number;
 }
 
+export interface Folego {
+  // meses que o usuário aguenta sem nova receita; null quando não há despesas
+  // fixas cadastradas (sem denominador não dá pra calcular).
+  meses: number | null;
+  despesasFixasMensais: number;
+}
+
 export interface ResumoEntries {
   totalReceitas: number;
   totalDespesas: number;
   saldo: number;
   baldes: BaldeSaldos;
+  folego: Folego;
 }
 
 interface EntryParaResumo {
@@ -44,9 +52,23 @@ interface EntryParaResumo {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/**
+ * Fôlego/runway (golden source 3.5/5.2) — quantos meses o usuário se mantém sem
+ * nova receita. Simplificação de protótipo: usamos o colchão dos baldes reserva
+ * + salário dividido pelo total mensal de despesas fixas. Revisar a fórmula com
+ * o golden source quando o conceito for fechado (ver FLUXO-mockup-spec §4).
+ */
+export function calcularFolego(baldes: BaldeSaldos, despesasFixasMensais: number): Folego {
+  const colchao = Math.max(0, baldes.reserva + baldes.salario);
+  const meses =
+    despesasFixasMensais > 0 ? Math.round((colchao / despesasFixasMensais) * 10) / 10 : null;
+  return { meses, despesasFixasMensais: round2(despesasFixasMensais) };
+}
+
 export function calcularResumo(
   entries: EntryParaResumo[],
-  config: BaldePercentuais
+  config: BaldePercentuais,
+  despesasFixasMensais = 0
 ): ResumoEntries {
   const baldes: BaldeSaldos = { salario: 0, imposto: 0, reserva: 0, reinvestimento: 0 };
   let totalReceitas = 0;
@@ -66,16 +88,19 @@ export function calcularResumo(
     }
   }
 
+  const baldesArredondados: BaldeSaldos = {
+    salario: round2(baldes.salario),
+    imposto: round2(baldes.imposto),
+    reserva: round2(baldes.reserva),
+    reinvestimento: round2(baldes.reinvestimento),
+  };
+
   return {
     totalReceitas: round2(totalReceitas),
     totalDespesas: round2(totalDespesas),
     saldo: round2(totalReceitas - totalDespesas),
-    baldes: {
-      salario: round2(baldes.salario),
-      imposto: round2(baldes.imposto),
-      reserva: round2(baldes.reserva),
-      reinvestimento: round2(baldes.reinvestimento),
-    },
+    baldes: baldesArredondados,
+    folego: calcularFolego(baldesArredondados, despesasFixasMensais),
   };
 }
 
